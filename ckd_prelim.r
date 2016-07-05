@@ -7,6 +7,8 @@ library("survey")
 
 data0 = read.csv("NHANES.csv")
 
+test = subset.data.MEC(data0)
+
 # construct initial data matrix
 eGFR.CKDstg.year = matrix(NA, nrow = 6, ncol = 1)
 
@@ -15,16 +17,8 @@ eGFR.CKDstg.year = matrix(NA, nrow = 6, ncol = 1)
 
 # for each 2-year data set:
 for(i in 1:length(unique(data0$SDDSRVYR))){
-  data.temp <- data0[data0$SDDSRVYR == i, ]
-  WTMEC.temp <- data.temp$WTMEC2YR
-  # create survey design for given 2-year set
-  temp.svd <- svydesign(
-    ids = ~SDMVPSU,    
-    strata = ~SDMVSTRA,
-    nest = TRUE,
-    weights = ~WTMEC.temp,
-    data = data.temp
-  )
+  # create survey design for each year
+  temp.svd = subset.data.MEC(data0, first.year = i, last.year = i)
   # compute survey statistic
   temp.eGFR <- svyby(
     formula = ~CKD_epi_eGFR,
@@ -45,6 +39,7 @@ eGFR.CKDstg.year = eGFR.CKDstg.year[, 2:ncol(eGFR.CKDstg.year)]
 # add row- and col-names
 rownames(eGFR.CKDstg.year) = c("CKD 0", "CKD 1","CKD 2", "CKD 3", 
                                "CKD 4", "CKD 5")
+
 colnames(eGFR.CKDstg.year) = c("eGFR - 99-00", "s.e.", 
                                "eGFR - 01-02", "s.e.",
                                "eGFR - 03-04", "s.e.",
