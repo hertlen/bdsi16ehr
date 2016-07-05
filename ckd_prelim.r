@@ -5,13 +5,13 @@ if ("survey" %in% packages$inst == FALSE) {
 
 library("survey")
 
-# Subsets of data - full data set (SDDSRVYR = {1 = 1999-2000, 2 = 2001-2002,
-# ... 8 = 2013-2014})
-
 data0 = read.csv("NHANES.csv")
 
 # construct initial data matrix
 eGFR.CKDstg.year = matrix(NA, nrow = 6, ncol = 1)
+
+# (SDDSRVYR = {1 = 1999-2000, 2 = 2001-2002,
+# ... 8 = 2013-2014})
 
 # for each 2-year data set:
 for(i in 1:length(unique(data0$SDDSRVYR))){
