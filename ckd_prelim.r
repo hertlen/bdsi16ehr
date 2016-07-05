@@ -5,39 +5,19 @@ if ("survey" %in% packages$inst == FALSE) {
 
 library("survey")
 
-# Subsets of data - full data set (SDDSRVYR = {1 = 1999-2000, 2 = 2001-2002, 3 = 2003-2004,
-# 4 = 2005-2006, 5 = 2007-2008,... 8 = 2013-2014})
+# Subsets of data - full data set (SDDSRVYR = {1 = 1999-2000, 2 = 2001-2002,
+# ... 8 = 2013-2014})
 
 data0 = read.csv("NHANES.csv")
 
-data1 <- data0[data0$SDDSRVYR == 2, ]
-WTMEC_1 <- data1$WTMEC2YR
-
-NHANES.0102 <- svydesign(
-  ids = ~SDMVPSU,         
-  strata = ~SDMVSTRA,   
-  nest = TRUE,
-  weights = ~WTMEC_1,
-  data = data1
-)
-
-avg.eGFR.by.CKDstage <- svyby(
-  formula = ~CKD_epi_eGFR,
-  by = ~factor(CKD_stage),
-  design = NHANES.0108,
-  na.rm = TRUE,
-  FUN = svymean
-)
-
-
-# construct initial data set
+# construct initial data matrix
 eGFR.CKDstg.year = matrix(NA, nrow = 6, ncol = 1)
 
 # for each 2-year data set:
 for(i in 1:length(unique(data0$SDDSRVYR))){
   data.temp <- data0[data0$SDDSRVYR == i, ]
   WTMEC.temp <- data.temp$WTMEC2YR
-  # create temporary survey design for each year in loop
+  # create survey design for given 2-year set
   temp.svd <- svydesign(
     ids = ~SDMVPSU,    
     strata = ~SDMVSTRA,
@@ -45,7 +25,7 @@ for(i in 1:length(unique(data0$SDDSRVYR))){
     weights = ~WTMEC.temp,
     data = data.temp
   )
-  # compute temporary survey statistic
+  # compute survey statistic
   temp.eGFR <- svyby(
     formula = ~CKD_epi_eGFR,
     by = ~factor(CKD_stage),
