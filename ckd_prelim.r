@@ -3,107 +3,107 @@ if ("survey" %in% packages$inst == FALSE) {
   install.packages("survey")
 }
 
+source("subset_svydata.R")
 library("survey")
 
 #####################
 ## Task 4 (NHANES) ##
 #####################
 
-data0 = read.csv("NHANES.csv")
-
-test = subset.data.MEC(data0)
-
-# construct initial data matrix
-eGFR.CKDstg.year = matrix(NA, nrow = 6, ncol = 1)
-
 # (SDDSRVYR = {1 = 1999-2000, 2 = 2001-2002,
 # ... 8 = 2013-2014})
+data0 = read.csv("NHANES.csv")
+
+# standardize by age
+# load("AgePop2000.RData")
+# AgePop = c(sum(AgePop2000[1:10,2]),sum(AgePop2000[11:14,2]),
+#            sum(AgePop2000[15:20,2]),sum(AgePop2000[21:24,2]))
+# AgeWeight = AgePop/sum(AgePop)
+# 
+# data1 <- data0[data0$SDDSRVYR >= 2 & data0$SDDSRVYR <= 8,]
+# data1$age_group = ifelse(data1$age_years<=19, "<=19",NA)
+# data1$age_group = ifelse(data1$age_years>=20 & data1$age_years<=39, "20-39",data1$age_group)
+# data1$age_group = ifelse(data1$age_years>=40 & data1$age_years<=59, "40-59",data1$age_group)
+# data1$age_group = ifelse(data1$age_years>=60, ">=60",data1$age_group)
+# data1$age_group = factor(data1$age_group,levels=c("<=19","20-39","40-59",">=60"))
+# 
+# WTMEC_1 <- data1$WTMEC2YR/7
+# 
+# NHANES.MEC.design1 <- svydesign(
+#   ids = ~SDMVPSU ,         
+#   strata = ~SDMVSTRA ,   
+#   nest = TRUE ,
+#   weights = ~WTMEC_1,
+#   data = data1
+# )
+# 
+# age_names = c("<=19","20-39","40-59",">=60")
+# 
+# CKD.diabetes.prev.list = NULL
+# for(i in 1:length(age_names)){
+#   CKD.diabetes.prev = svyby(
+#     formula = ~diabetes,
+#     by = ~(CKD_stage == 5),
+#     design = subset(NHANES.MEC.design1,age_group==age_names[i]),
+#     FUN = svymean,
+#     na.rm = TRUE
+#   )
+#   CKD.diabetes.prev.list = cbind(CKD.diabetes.prev.list,
+#                                  CKD.diabetes.prev[,2])
+# }
+# 
+# colnames(CKD.diabetes.prev.list) = age_names
+# rownames(CKD.diabetes.prev.list) = c("Non-CKD stg5","CKD stg5")
+# 
+# # Age-Adjusted prevalence of CKD stg5 among those without/with diabetes
+# c(sum(CKD.diabetes.prev.list[1,] * AgeWeight), sum(CKD.diabetes.prev.list[2,] * AgeWeight))
+
+
+# construct initial data frame - because we're adding 2
+# columns, cannot initialize as null
+# 6 rows because CKD_stage can take on 6 levels
+stat.CKDstg.year = matrix(NA, nrow = 2, ncol = 1)
 
 # for each 2-year data set:
 for(i in 1:length(unique(data0$SDDSRVYR))){
   # create survey design for each year
   temp.svd = subset.data.MEC(data0, first.year = i, last.year = i)
   # compute survey statistic
-  temp.eGFR <- svyby(
-    formula = ~CKD_epi_eGFR,
-    by = ~factor(CKD_stage),
+  temp.stat <- svyby(
+    formula = ~LDL,
+    by = ~factor(CKD_stage == 5),
     design = temp.svd,
     na.rm = TRUE,
     FUN = svymean
   )
-  # bind to existing set
-  eGFR.CKDstg.year = cbind(eGFR.CKDstg.year, temp.eGFR[, 2:3])
+  # bind to existing set:
+  stat.CKDstg.year = cbind(stat.CKDstg.year, temp.stat[, 2:3])
 }
 
-# eGFR.CKDstg.year was coerced to type 'data.frame'
-
-# remove first row (NAs)
-eGFR.CKDstg.year = eGFR.CKDstg.year[, 2:ncol(eGFR.CKDstg.year)]
+# delete first column
+stat.CKDstg.year = stat.CKDstg.year[, 2:ncol(stat.CKDstg.year)]
 
 # add row- and col-names
-rownames(eGFR.CKDstg.year) = c("CKD 0", "CKD 1","CKD 2", "CKD 3", 
+rownames(stat.CKDstg.year) = c("CKD 0", "CKD 1","CKD 2", "CKD 3", 
                                "CKD 4", "CKD 5")
 
-colnames(eGFR.CKDstg.year) = c("eGFR - 99-00", "s.e.", 
-                               "eGFR - 01-02", "s.e.",
-                               "eGFR - 03-04", "s.e.",
-                               "eGFR - 05-06", "s.e.",
-                               "eGFR - 07-08", "s.e.",
-                               "eGFR - 09-10", "s.e.",
-                               "eGFR - 11-12", "s.e.",
-                               "eGFR - 13-14", "s.e.")
+colnames(stat.CKDstg.year) = c("99-00", "s.e.",
+                               "01-02", "s.e.",
+                               "03-04", "s.e.",
+                               "05-06", "s.e.",
+                               "07-08", "s.e.",
+                               "09-10", "s.e.",
+                               "11-12", "s.e.",
+                               "13-14", "s.e.")
 
 # transpose matrix may lend itself to analyzing data more easily
-eGFR.transpose = t(eGFR.CKDstg.year)
-plot(as.numeric(eGFR.transpose[1,]) ~ as.factor(colnames(eGFR.transpose)), type = 'p')
-
-
-# Task 1 #
-
-# Facility level data visualization and facility level association, 
-# e.g., what is the relationship between mortality (SMR) and other quality
-# measures and facility characteristics?
+stat.transpose = t(stat.CKDstg.year)
 
 
 
-# Task 4 #
-
-# Association study, e.g., what is the relationship between CKD and
-# potential risk factors?
 
 
-### Potential risk factors for GLM: ###
 
-# Triglycerides (correlated with diabetes, obesity) ("Triglycerides")
-# 4 factor levels: < 150 mg/dL (normal), 150-199 (borderline high), 200-499 (high),
-# 500+ (very high)
-
-# Total Cholesterol ("Total_chol")
-# 4 factor levels: < 100 mg/dL (optimal), 100-129 (near/above optimal), 130-159
-# (Borderline high), 160-189 mg/dL (high)
-
-# Hypertension ("hypertension")
-# 1=Unware, 2=Aware not treated, 3=Aware treated uncontrolled, 4=Aware treated controlled
-
-# Known correlated covariates: 
-
-# UACR/Urine Albumin-to-Creatinine Ratio, ("UACR")
-# Higher = worse, correlated with higher stages of CKD
-
-# eGFR - estimated glomerular filtration rate
-# lower = worse, correlated with higher stages of CKD
-
-### Methods: ###
-
-# ANOVA?
-
-# Try certain combinations of GLMs with measures that are not directly correlated
-# compare AIC/BIC score between GLMs to avoid overfitting
-# cross-validate between GLMs, try different link functions
-
-# compare CKD rates between races/ethnicities and control for BMI, UACR, eGFR?
-
-# Causal/counterfactual inference
 
 
 

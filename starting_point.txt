@@ -25,7 +25,9 @@
 # Hypertension ("hypertension")
 # 1=Unware, 2=Aware not treated, 3=Aware treated uncontrolled, 4=Aware treated controlled
 
-# Age
+# Age - we want to adjust for this
+
+
 
 # Known correlated covariates, probably not worth investigating: 
 
