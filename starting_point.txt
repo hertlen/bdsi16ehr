@@ -25,12 +25,15 @@
 # Hypertension ("hypertension")
 # 1=Unware, 2=Aware not treated, 3=Aware treated uncontrolled, 4=Aware treated controlled
 
-# Known correlated covariates: 
+# Age
+
+# Known correlated covariates, probably not worth investigating: 
 
 # UACR/Urine Albumin-to-Creatinine Ratio, ("UACR")
 # Higher = worse, correlated with higher stages of CKD
 
 # eGFR - estimated glomerular filtration rate
+"The" biomarker for CKD, so not useful to compare as covariate of CKD
 # lower = worse, correlated with higher stages of CKD
 
 ### Methods: ###

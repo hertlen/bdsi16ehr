@@ -1,5 +1,5 @@
-# returns a surveydesign object based on given data, parameters, using MEC (exam)
-# weights
+# returns a surveydesign object based on given data, parameters,
+# using MEC (exam) weights
 
 subset.data.MEC = function(surveydata, first.year = 1, last.year = 8) {
   data_sub = surveydata[surveydata$SDDSRVYR >= first.year & data0$SDDSRVYR <= last.year, ]
