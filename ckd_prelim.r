@@ -5,6 +5,10 @@ if ("survey" %in% packages$inst == FALSE) {
 
 library("survey")
 
+#####################
+## Task 4 (NHANES) ##
+#####################
+
 data0 = read.csv("NHANES.csv")
 
 test = subset.data.MEC(data0)
@@ -52,29 +56,6 @@ colnames(eGFR.CKDstg.year) = c("eGFR - 99-00", "s.e.",
 # transpose matrix may lend itself to analyzing data more easily
 eGFR.transpose = t(eGFR.CKDstg.year)
 plot(as.numeric(eGFR.transpose[1,]) ~ as.factor(colnames(eGFR.transpose)), type = 'p')
-
-
-# 2001-2014 : MEC weights
-# second condition in line 11 subset is unnecessary now but could be worthwhile
-# to preserve subset length when additional year data is added
-data0114 = data0[data0$SDDSRVYR >= 2 & data0$SDDSRVYR <= 8, ]
-WTMEC14 = data0114$WTMEC2YR / 7
-
-NHANES.0114 <- svydesign(
-  ids = ~SDMVPSU,         
-  strata = ~SDMVSTRA,   
-  nest = TRUE,
-  weights = ~WTMEC14,
-  data = data0114
-)
-
-avg.eGFR.by.CKDstage2 <- svyby(
-  formula = ~CKD_epi_eGFR,
-  by = ~factor(CKD_stage),
-  design = NHANES.0114,
-  na.rm = TRUE,
-  FUN = svymean
-)
 
 
 # Task 1 #
