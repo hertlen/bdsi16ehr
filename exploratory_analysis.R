@@ -20,7 +20,7 @@ variables = c("hypertension", "BMI", "diabetes", "sex")
 cnames = c("")
 for(i in 1:length(variables)){
   cnames = append(cnames, variables[i])
-  cnames = append(cnames, "se")
+  cnames = append(cnames, paste("se", variables[i]))
 }
 cnames = cnames[2:length(cnames)]
 storage = matrix(NA, ncol = 2, nrow = 6)
@@ -37,10 +37,27 @@ for(i in 1:length(variables)){
 storage
 storage = storage[, 3:ncol(storage)]
 colnames(storage) = cnames
-storage
 
+CKD_stages = matrix(c(0:5), nrow = 6, ncol = 1)
+storage = cbind(CKD_stages, storage)
 
+install.packages("ggplot2")
+library("ggplot2")
 
+par(mfrow = c(2,2))
 
+ggplot(storage, aes(x = CKD_stages, y = hypertension)) +
+  geom_errorbar(aes(ymin = hypertension - 1.98*`se hypertension`, 
+                    ymax = hypertension + 1.98*`se hypertension`)) +
+  geom_point()
 
+ggplot(storage, aes(x = CKD_stages, y = BMI)) +
+  geom_errorbar(aes(ymin = BMI - 1.98*`se BMI`, 
+                    ymax = BMI + 1.98*`se BMI`)) +
+  geom_point()
+
+ggplot(storage, aes(x = CKD_stages, y = diabetes)) +
+  geom_errorbar(aes(ymin = diabetes - 1.98*`se diabetes`, 
+                    ymax = diabetes + 1.98*`se diabetes`)) +
+  geom_point()
 
