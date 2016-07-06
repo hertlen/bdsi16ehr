@@ -70,7 +70,7 @@ for(i in 1:length(unique(data0$SDDSRVYR))){
   temp.svd = subset.data.MEC(data0, first.year = i, last.year = i)
   # compute survey statistic
   temp.stat <- svyby(
-    formula = ~LDL,
+    formula = ~Total_chol,
     by = ~factor(CKD_stage == 5),
     design = temp.svd,
     na.rm = TRUE,
