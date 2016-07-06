@@ -1,8 +1,5 @@
-packages = packageStatus()
-if ("survey" %in% packages$inst == FALSE) {
-  install.packages("survey")
-}
 
+install.packages("survey")
 source("subset_svydata.R")
 library("survey")
 
