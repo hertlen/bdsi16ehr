@@ -46,9 +46,10 @@ model = svyglm(CKD_epi_eGFR ~ Total_chol + diabetes, design = temp.svd)
 
 model2 = svyglm(Total_chol ~ age_years, design = temp.svd)
 model3 = svyglm(atp_chol ~ age_years, design = temp.svd)
-model4 = svyglm(diabetes ~ age_years, design = temp.svd, family = binomial(link = "logit"))
+model4 = svyglm(factor(diabetes) ~ age_years, design = temp.svd, family = quasibinomial(link = "logit"))
 diab.predict = predict(model4, newdata = data.frame(age_years = 2:100))
-lines(diab.predict)
+svyplot(diabetes~age_years, design = temp.svd)
+lines(fitted(model4))
 
 
 prediction = predict(model, newdata = data.frame(age_years = 2:100))
