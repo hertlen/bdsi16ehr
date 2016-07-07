@@ -39,7 +39,7 @@ colnames(storage) = cnames
 CKD_stages = matrix(c(0:5), nrow = 6, ncol = 1)
 storage = cbind(CKD_stages, storage)
 
-model = svyglm(CKD_epi_eGFR ~ Total_chol, design = temp.svd)
+model = svyglm(CKD_epi_eGFR ~ Total_chol + diabetes, design = temp.svd)
 
 # Total_chol and diabetes are highly correlated 
 # (high coefficient) with years - atp_chol less so
