@@ -1,21 +1,18 @@
-packages = packageStatus()
-if ("survey" %in% packages$inst == FALSE) {
-  install.packages("survey")
-}
-
-source("subset_svydata.R")
+install.packages("survey")
+install.packages("ggplot2")
+library("ggplot2")
 library("survey")
+source("subset_svydata.R")
+
 
 #####################
 ## Task 4 (NHANES) ##
 #####################
 
-# (SDDSRVYR = {1 = 1999-2000, 2 = 2001-2002,
-# ... 8 = 2013-2014})
 
 data0 = read.csv("NHANES.csv")
 
-temp.svd = subset.data.MEC(data0, first.year = 1, last.year = 8)
+temp.svd = subset.data.MEC(data0, first.year = 2, last.year = 8)
 variables = c("hypertension", "BMI", "diabetes", "sex")
 cnames = c("")
 for(i in 1:length(variables)){
@@ -23,6 +20,7 @@ for(i in 1:length(variables)){
   cnames = append(cnames, paste("se", variables[i]))
 }
 cnames = cnames[2:length(cnames)]
+
 storage = matrix(NA, ncol = 2, nrow = 6)
 for(i in 1:length(variables)){
   temp.stat <- svyby(
@@ -34,17 +32,40 @@ for(i in 1:length(variables)){
   )
   storage = cbind(storage, temp.stat[, 2:ncol(temp.stat)])
 }
-storage
+
 storage = storage[, 3:ncol(storage)]
 colnames(storage) = cnames
 
 CKD_stages = matrix(c(0:5), nrow = 6, ncol = 1)
 storage = cbind(CKD_stages, storage)
 
-install.packages("ggplot2")
-library("ggplot2")
+model = svyglm(CKD_epi_eGFR ~ Total_chol, design = temp.svd)
 
-par(mfrow = c(2,2))
+# Total_chol and diabetes are highly correlated 
+# (high coefficient) with years - atp_chol less so
+
+model2 = svyglm(Total_chol ~ age_years, design = temp.svd)
+model3 = svyglm(atp_chol ~ age_years, design = temp.svd)
+model4 = svyglm(diabetes ~ age_years, design = temp.svd, family = binomial(link = "logit"))
+diab.predict = predict(model4, newdata = data.frame(age_years = 2:100))
+lines(diab.predict)
+
+
+prediction = predict(model, newdata = data.frame(age_years = 2:100))
+
+data_sub = data0[data0$SDDSRVYR >= 2 & data0$SDDSRVYR <= 8, ]
+weight = data_sub$WTMEC2YR / 7
+temp.svd = svydesign(
+  ids = ~SDMVPSU,
+  strata = ~SDMVSTRA,
+  nest = TRUE,
+  weights = ~weight,
+  data = data_sub
+)
+svyplot(CKD_epi_eGFR~age_years, design = temp.svd, pch = 19)
+lines(prediction)
+
+# graphs
 
 ggplot(storage, aes(x = CKD_stages, y = hypertension)) +
   geom_errorbar(aes(ymin = hypertension - 1.98*`se hypertension`, 
