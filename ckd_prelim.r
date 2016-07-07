@@ -1,8 +1,5 @@
-packages = packageStatus()
-if ("survey" %in% packages$inst == FALSE) {
-  install.packages("survey")
-}
 
+install.packages("survey")
 source("subset_svydata.R")
 library("survey")
 
@@ -12,6 +9,7 @@ library("survey")
 
 # (SDDSRVYR = {1 = 1999-2000, 2 = 2001-2002,
 # ... 8 = 2013-2014})
+
 data0 = read.csv("NHANES.csv")
 
 # standardize by age
@@ -63,6 +61,7 @@ data0 = read.csv("NHANES.csv")
 # columns, cannot initialize as null
 # 6 rows because CKD_stage can take on 6 levels
 stat.CKDstg.year = matrix(NA, nrow = 2, ncol = 1)
+test = c("Total_chol", "asdf")
 
 # for each 2-year data set:
 for(i in 1:length(unique(data0$SDDSRVYR))){
@@ -71,7 +70,7 @@ for(i in 1:length(unique(data0$SDDSRVYR))){
   # compute survey statistic
   temp.stat <- svyby(
     formula = ~Total_chol,
-    by = ~factor(CKD_stage == 5),
+    by = ~factor(CKD_stage),
     design = temp.svd,
     na.rm = TRUE,
     FUN = svymean

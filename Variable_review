@@ -1,0 +1,36 @@
+-----Variables to consider------ 
+
+BMI --> check correlation with chol
+atp_chol --> check correlation with triglycerides
+              (ldl+hdl+(triglycerides/5))/HDL -   
+              possibly use this ratio instead of 
+              already factored variable atp_chol
+              interaction term with sex?
+              
+hypertension
+diabetes
+smoking??
+insurance??
+
+
+-----Things to look at-------
+
+time series --> compare U.S. trends across years
+                1. obesity and CKD
+                2. Are certain races seeing changes                     in prevalence of CKD over time?
+                3. Socioeconomic status study
+                
+Ridge regression
+
+Cross validation
+
+BIC/AIC comparison
+
+ROC curve
+
+Bayesian analysis - conditional probabilities
+
+
+
+
+
