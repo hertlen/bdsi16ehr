@@ -1,7 +1,7 @@
 # Arguments: data frame, family (default gaussian),
 # equation (Response ~ covariate1 + covariate2...)
 
-cross_validation = function(data, type.fam = gaussian(), response_var, covariates) {
+cross_validate = function(data, type.fam = gaussian(), response_var, covariates) {
   data_sub = data[data$SDDSRVYR >= 2 & data$SDDSRVYR <= 8, ]
   weight = data_sub$WTMEC2YR / 7
   survey_design = svydesign(
