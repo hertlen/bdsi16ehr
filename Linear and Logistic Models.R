@@ -25,8 +25,6 @@ temp.svd = svydesign(
 # races : 1 = mexican american, 2 = other hispanic, 3 = non-hispanic white, 4 = non-hispanic black,
 # 5 = other
 
-
-
 model_ckd1 = svyglm(CKD_epi_eGFR ~ age_years + BMI + Triglycerides, design = temp.svd)
 
 model_ckd2 = svyglm(factor(CKD) ~ age_years + hypertension + BMI + Triglycerides
@@ -53,12 +51,12 @@ quantile(data0$Triglycerides, probs = c(0.025, 0.975), na.rm = TRUE) # 95% of pe
 
 
 # box plot for factor data
-svyboxplot(CKD ~ factor(hypertension),
+svyboxplot(BMI ~ factor(hypertension),
            design = temp.svd,
            all.outliers = TRUE,
            axes = FALSE,
            xlab = "Hypertension",
-           ylab = "CKD",
+           ylab = "BMI",
            col = "yellow",
            border = "lightblue")
 axis(1, at = c(1,2), labels = c("No", "Yes"))
