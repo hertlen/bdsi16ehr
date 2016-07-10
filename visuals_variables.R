@@ -1,3 +1,5 @@
+# install.packages(c("ggplot2", "ggthemes", "reshape2", "survey"))
+
 library(survey)
 library(ggplot2)
 library(ggthemes)
