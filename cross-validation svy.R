@@ -1,12 +1,14 @@
-# Arguments: data frame, family (default gaussian),
-# equation (Response ~ covariate1 + covariate2...)
+# Arguments: data frame, family (default binomial to predict CKD),
+# covariates
 
-cross_validate = function(data, binomial = TRUE, response_var, covariates) {
+# if binomial is TRUE, the response variable will be CKD, if FALSE, then eGFR
+
+LOO_cross_validate = function(data, binomial = TRUE, covariates) {
   if(binomial == FALSE) {
-    return(cross_validate_gaussian(data, response_var, covariates))
+    return(cross_validate_gaussian(data, covariates))
   }
-  data_sub = data[data$SDDSRVYR >= 2 & data$SDDSRVYR <= 8, ]
-  weight = data_sub$WTMEC2YR / 7
+  data_sub = data[data$SDDSRVYR >= 7 & data$SDDSRVYR <= 8, ]
+  weight = data_sub$WTMEC2YR / 2
   survey_design = svydesign(
     ids = ~SDMVPSU,
     strata = ~SDMVSTRA,
@@ -15,7 +17,7 @@ cross_validate = function(data, binomial = TRUE, response_var, covariates) {
     data = data_sub
   )
   # reconstruct equation from response, covariates
-  equation = paste(response_var, "~", covariates[1])
+  equation = paste("CKD ~", covariates[1])
   if(length(covariates) > 1) {
     for(i in 2:length(covariates)) {
       equation = paste(equation, "+", covariates[i], sep = " ")
@@ -37,23 +39,28 @@ cross_validate = function(data, binomial = TRUE, response_var, covariates) {
     for(k in 1:length(covariates)){
       current_var = covariates[k]
       col_num = which(colnames(survey_design$variables) == current_var)
-      print(col_num)
-      # bugged
       current_row = survey_design$variables[survey_design$variables$iterator == j, ]
-      print(current_row)
-      test_set[1, k] = current_row[col_num]
+      test_set[1, k] = current_row[1, col_num]
     }
     colnames(test_set) = covariates
-    print(test_set)
-    prediction = predict(survey_glm, newdata = test_set)
-    print(prediction)
-    # save squared errors
-    errors[j] = (prediction - survey_design[survey_design$variables$iterator == j, ]$response_var) ^ 2
-    print(errors[j])
+    # if we're missing necessary data to compare, leave NA
+    if(any(is.na(test_set))) {
+      errors[j] = NA
+    } else {
+      prediction = predict(survey_glm, newdata = as.data.frame(test_set), type = "response")
+      response_true = isTRUE(survey_design$variables[survey_design$variables$iterator == j, ]$CKD == 1)
+      if(prediction[1] > 0.75 & response_true | prediction[1] < 0.25 & !response_true) {
+        errors[j] = 0
+      } else {
+        errors[j] = 1
+      }
+    }
+    print(j)
   }
+  return(errors)
 }
 
-cross_validate_gaussian = function(data, response_var, covariates) {
+k_fold_cross_validate = function(data, binomial = TRUE, covariates, folds = 2) {
   data_sub = data[data$SDDSRVYR >= 2 & data$SDDSRVYR <= 8, ]
   weight = data_sub$WTMEC2YR / 7
   survey_design = svydesign(
@@ -64,7 +71,7 @@ cross_validate_gaussian = function(data, response_var, covariates) {
     data = data_sub
   )
   # reconstruct equation from response, covariates
-  equation = paste(response_var, "~", covariates[1])
+  equation = paste("CKD ~", covariates[1])
   if(length(covariates) > 1) {
     for(i in 2:length(covariates)) {
       equation = paste(equation, "+", covariates[i], sep = " ")
@@ -72,16 +79,27 @@ cross_validate_gaussian = function(data, response_var, covariates) {
   }
   iterator = seq(from = 1, to = nrow(data_sub), by = 1)
   survey_design$variables = cbind(iterator, survey_design$variables)
-  errors = numeric(length(iterator))
-  for(i in 1:length(iterator)){
-    # leave out the ith row, indicated by iterator
-    current.design = subset(survey_design, survey_design$variables$iterator != i)
+  # randomly partition data set into folds
+  for(i in 1:nrow(data_sub)) {
+    survey_design$variables$iterator[i] = sample(1:folds, 1, replace = T)
+  }
+  print
+  group_markers[length(group_markers)] = num_obs
+  for(i in 1:length(group_markers)){
+    training_set = subset()
     survey_glm = svyglm(
       equation,
-      design = current.design, 
-      family = gaussian
+      design = training_set,
+      
     )
-    ####### ####
+    # create GLM all but group i
+    # use predict to find error rate on group i
   }
 }
+
+
+
+
+
+
 
