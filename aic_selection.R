@@ -15,10 +15,17 @@ NHANES.MEC.design1 <- svydesign(
 )
 
 covariates = c("hypertension","age_years","male","diabetes",
-               "BMI","Total_chol","factor(Smoking)","factor(race_eth)")
+               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
+               "factor(education)","Triglycerides","factor(annual_house_income)",
+               "factor(htn_gp)","HDL","LDL","factor(angina_self)","factor(Insulin)",
+               "factor(stroke_self)","age_months","factor(kidney_told)","insured",
+               "private_ins","Medicare_ins","sleep_amount","vigorous_activity",
+               "meals_not_home","Chol_self","vigorous_rec",
+               "vigorous_work")
 
-svyglm(CKD_epi_eGFR ~ +hypertension+age_years+diabetes+
-         BMI+Total_chol+factor(Smoking), design = NHANES.MEC.design1)
+svyglm(CKD ~ +hypertension+age_years+diabetes+
+         BMI+Total_chol+factor(Smoking), design = NHANES.MEC.design1,
+       family="binomial")
 
 aic.old = 10^6
 list.aic = rep(0,length(covariates))
@@ -38,6 +45,7 @@ aic.history = aic.old
 best.aic = aic.old
 best.is = best.i
 done = 0
+residuals.list = NULL
 while(done==0){
   previous.aic = best.aic
   list.aic = NULL
@@ -60,19 +68,20 @@ while(done==0){
     best.fm = as.formula(paste(deparse(best.fm),"+",list.cov.aic[best.i]))
     best.is = c(best.is,which(covariates == list.cov.aic[best.i]))
     aic.history = c(aic.history,min(list.aic))
+    fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family = "binomial")
+    residual.model = resid(fit1a)
+    residuals.list = cbind(residuals.list,residual.model)
   }
   if(previous.aic < best.aic | loop.count == length(covariates) ){
     done = 1
   }
 }
 
+colnames(residuals.list) = seq(1:ncol(residuals.list))
 fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
 
-
-
-
-
-
-data[[whatever]]
+plot(residuals.list[,6])
+hist(residuals.list[,6])
+hist(log(residuals.list[,6]))
 
