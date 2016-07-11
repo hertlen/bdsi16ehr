@@ -57,7 +57,17 @@ LOO_cross_validate = function(data, binomial = TRUE, covariates) {
     }
     print(j)
   }
-  return(errors)
+  # re-bind errors to original data frame, create new design matrix with weighted errors
+  data_with_error = cbind(data_sub, errors)
+  colnames(data_sub)[length(colnames(data_sub))] = "weighted errors"
+  weighted_errors = svydesign(
+    ids = ~SDMVPSU,
+    strata = ~SDMVSTRA,
+    nest = TRUE,
+    weights = ~weight,
+    data = data_with_error
+  )
+  return(weighted_errors$variables$`weighted errors`)
 }
 
 k_fold_cross_validate = function(data, binomial = TRUE, covariates, folds = 2) {
