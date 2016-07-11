@@ -19,9 +19,12 @@ covariates = c("hypertension","age_years","male","diabetes",
                "factor(education)","Triglycerides","factor(annual_house_income)",
                "factor(htn_gp)","HDL","LDL","factor(angina_self)",
                "factor(stroke_self)","age_months","factor(kidney_told)","insured",
-               "private_ins","Medicare_ins","sleep_amount","vigorous_activity",
-               "meals_not_home","Chol_self")
-              
+               "private_ins","Medicare_ins","sleep_amount","vigorous_activity","vigorous_work",
+               "vigorous_rec","meals_not_home","Chol_self")
+
+covariates = c("hypertension","age_years","male","diabetes",
+               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
+               "factor(education)","Triglycerides","factor(annual_house_income)","private_ins")             
 
 #AIC ----
 aic.old = 10^6
@@ -79,6 +82,7 @@ colnames(residuals.list) = seq(1:ncol(residuals.list))
 fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
 
+plot(aic.history)
 plot(residuals.list[,6])
 hist(residuals.list[,6])
 hist(log(residuals.list[,6]))
