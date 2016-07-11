@@ -231,7 +231,7 @@ for (i in 2:8) {
 }
 
 p.time <- ggplot(total.time)
-p.time + geom_bar(aes(stage, total, fill=cut), 
+p.time + geom_bar(aes(stage, total, fill=year), 
                   position="dodge", stat="identity")
 
 total.time[,4] <- as.character(total.time[,4])
@@ -263,6 +263,14 @@ p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
                                           '3'="#1F232B", '4'="#E8AA0C", '5'="#23530D"
                                           , '6'="#121A52", '7'="#8B215F", 
                                           '8'="#EB6313"), .85))
+#subset stages 1-5
+total.time2 <- total.time[total.time$stage!='0',]
+p.time <- ggplot(total.time2, aes(x=year,y=total, colour=stage)) + geom_line(aes(group=stage))+
+  labs(x='year', y='Total Number of People', title='CKD from 2001-2014')
+p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
+                                          '3'="#1F232B", '4'="#E8AA0C", '5'="#23530D"
+                                          , '6'="#121A52", '7'="#8B215F", 
+                                          '8'="#EB6313"), .85)) + theme_few()
 
 
 
