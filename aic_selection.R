@@ -24,7 +24,6 @@ covariates = c("hypertension","I(hypertension^2)","age_years","male","diabetes",
                "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
                "factor(education)","Triglycerides","factor(annual_house_income)","private_ins",
                "factor(angina_self)")
-
         
 
 #AIC ----
