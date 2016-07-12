@@ -14,17 +14,17 @@ NHANES.MEC.design1 <- svydesign(
   data = data1
 )
 
-covariates = c("hypertension","age_years","male","diabetes",
-               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
+covariates = c("factor(hypertension)","age_years","factor(male)","factor(diabetes)",
+               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","factor(obese)",
                "factor(education)","Triglycerides","factor(annual_house_income)",
                "factor(htn_gp)","HDL","LDL","factor(angina_self)",
                "factor(stroke_self)","age_months","factor(kidney_told)","insured",
-               "private_ins","Medicare_ins","sleep_amount","vigorous_activity","vigorous_work",
+               "factor(private_ins)","Medicare_ins","sleep_amount","vigorous_activity","vigorous_work",
                "vigorous_rec","meals_not_home","Chol_self")
 
-covariates = c("hypertension","age_years","male","diabetes",
-               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
-               "factor(education)","Triglycerides","factor(annual_house_income)","private_ins",
+covariates = c("factor(hypertension)","age_years","factor(male)","factor(diabetes)",
+               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","factor(obese)",
+               "factor(education)","Triglycerides","factor(annual_house_income)","factor(private_ins)",
                "factor(angina_self)","sleep_amount")             
 
 #AIC ----
@@ -88,7 +88,6 @@ plot(aic.history)
 plot(residuals.list[,6])
 hist(residuals.list[,6])
 hist(log(residuals.list[,6]))
-
 
 #BIC -----
 
