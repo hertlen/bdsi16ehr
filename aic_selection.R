@@ -1,5 +1,4 @@
 library(survey)
-
 data0 = read.csv("NHANES.csv")
 
 
@@ -33,8 +32,8 @@ aic.old = 10^6
 list.aic = rep(0,length(covariates))
 
 for (i in 1:length(covariates)){
-  fm = as.formula(paste("CKD ~",covariates[i]))
-  fit1a = svyglm(fm, design = NHANES.MEC.design1, family="binomial")
+  fm = as.formula(paste("CKD_epi_eGFR ~",covariates[i]))
+  fit1a = svyglm(fm, design = NHANES.MEC.design1, family="gaussian")
   aic.new = fit1a$aic
   list.aic[i] = aic.new
   if (aic.new < aic.old){
@@ -60,7 +59,7 @@ while(done==0){
       next # skip iteration and go to next iteration
       cat(n) }
     fm = as.formula(paste(deparse(best.fm),"+",covariates[i]))
-    fit1a = svyglm(fm, design = NHANES.MEC.design1, family = "binomial")
+    fit1a = svyglm(fm, design = NHANES.MEC.design1, family = "gaussian")
     aic.new = fit1a$aic
     list.aic = c(list.aic,aic.new)
     list.cov.aic = c(list.cov.aic,covariates[i])
@@ -71,7 +70,7 @@ while(done==0){
     best.fm = as.formula(paste(deparse(best.fm),"+",list.cov.aic[best.i]))
     best.is = c(best.is,which(covariates == list.cov.aic[best.i]))
     aic.history = c(aic.history,min(list.aic))
-    fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family = "binomial")
+    fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family = "gaussian")
     residual.model = resid(fit1a)
     residuals.list = cbind(residuals.list,residual.model)
   }
@@ -81,7 +80,7 @@ while(done==0){
 }
 
 colnames(residuals.list) = seq(1:ncol(residuals.list))
-fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
+fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="gaussian")
 summary(fit1a)
 best.fm #BEST MODEL
 
@@ -155,3 +154,5 @@ hist(log(residuals.list[,5]))
 plot(residuals.list[,6])
 hist(residuals.list[,6])
 hist(log(residuals.list[,6]))
+
+
