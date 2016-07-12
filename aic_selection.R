@@ -24,7 +24,8 @@ covariates = c("hypertension","age_years","male","diabetes",
 
 covariates = c("hypertension","age_years","male","diabetes",
                "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
-               "factor(education)","Triglycerides","factor(annual_house_income)","private_ins")             
+               "factor(education)","Triglycerides","factor(annual_house_income)","private_ins",
+               "factor(angina_self)","sleep_amount")             
 
 #AIC ----
 aic.old = 10^6
@@ -87,40 +88,33 @@ plot(residuals.list[,6])
 hist(residuals.list[,6])
 hist(log(residuals.list[,6]))
 
-##CV -----
-index = sample(1:nrow(NHANES.MEC.design1), nrow(NHANES.MEC.design1)/2,
-               replace=FALSE)
-training_set = NHANES.MEC.design1[index,]
-test_set = NHANES.MEC.design1[-index,]
 
-list.acc = rep(0,length(covariates))
-acc.old = 0
+#BIC -----
+
+bic.old = 10^6
+list.bic = rep(0,length(covariates))
+
 for (i in 1:length(covariates)){
-  print(i)
   fm = as.formula(paste("CKD ~",covariates[i]))
-  fit1a = svyglm(fm, design = training_set, family="binomial")
-  prediction = predict(fit1a, test_set$variables, type = "response")
-  ind.prediction = as.numeric(rownames(as.data.frame(prediction)))
-  prediction = as.numeric(prediction > min(prediction))
-  tab = table(prediction, test_set$variables$CKD[ind.prediction])
-  acc.new = sum(diag(tab))/sum(tab)
-  list.acc[i] = acc.new
-  if (acc.new > acc.old){
-    acc.old = acc.new
+  fit1a = svyglm(fm, design = NHANES.MEC.design1, family="binomial")
+  bic.new = AIC(fit1a,k = log(length(fit1a)))[2]
+  list.bic[i] = bic.new
+  if (bic.new < bic.old){
+    bic.old = bic.new
     best.fm = fm
     best.i = i
   }
 }
 
-acc.history = acc.old
-best.acc = acc.old
+bic.history = bic.old
+best.bic = bic.old
 best.is = best.i
 done = 0
 residuals.list = NULL
 while(done==0){
-  previous.acc = best.acc
-  list.acc = NULL
-  list.cov.acc = NULL
+  previous.bic = best.bic
+  list.bic = NULL
+  list.cov.bic = NULL
   loop.count = 0
   for (i in 1:length(covariates)){
     if(i %in% best.is) {
@@ -128,38 +122,31 @@ while(done==0){
       next # skip iteration and go to next iteration
       cat(n) }
     fm = as.formula(paste(deparse(best.fm),"+",covariates[i]))
-    fit1a = svyglm(fm, design = training_set, family = "binomial")
-    
-    prediction = predict(fit1a, test_set$variables, type = "response")
-    ind.prediction = as.numeric(rownames(as.data.frame(prediction)))
-    
-    prediction = as.numeric(prediction >= 0.55)
-    tab = table(prediction, test_set$variables$CKD[ind.prediction])
-    acc.new = sum(diag(tab))/sum(tab)
-    
-   
-    list.acc = c(list.acc,acc.new)
-    list.cov.acc = c(list.cov.acc,covariates[i])
+    fit1a = svyglm(fm, design = NHANES.MEC.design1, family = "binomial")
+    bic.new = AIC(fit1a,k = log(length(fit1a)))[2]
+    list.bic = c(list.bic,bic.new)
+    list.cov.bic = c(list.cov.bic,covariates[i])
   }
   if (loop.count != length(covariates)){
-    best.i = which(list.acc == min(list.acc))
-    best.acc = min(list.acc)
-    best.fm = as.formula(paste(deparse(best.fm),"+",list.cov.acc[best.i]))
-    best.is = c(best.is,which(covariates == list.cov.acc[best.i]))
-    acc.history = c(acc.history,min(list.acc))
-    fit1a = svyglm(best.fm, design = training_set, family = "binomial")
+    best.i = which(list.bic == min(list.bic))
+    best.bic = min(list.bic)
+    best.fm = as.formula(paste(deparse(best.fm),"+",list.cov.bic[best.i]))
+    best.is = c(best.is,which(covariates == list.cov.bic[best.i]))
+    bic.history = c(bic.history,min(list.bic))
+    fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family = "binomial")
     residual.model = resid(fit1a)
     residuals.list = cbind(residuals.list,residual.model)
   }
-  if(previous.acc > best.acc | loop.count == length(covariates) ){
+  if(previous.bic < best.bic | loop.count == length(covariates) ){
     done = 1
   }
 }
 
 colnames(residuals.list) = seq(1:ncol(residuals.list))
-fit1a = svyglm(best.fm, design = training_set, family="binomial")
+fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
 
-plot(residuals.list[,6])
-hist(residuals.list[,6])
-hist(log(residuals.list[,6]))
+plot(bic.history)
+plot(residuals.list[,5])
+hist(residuals.list[,5])
+hist(log(residuals.list[,5]))
