@@ -13,18 +13,18 @@ NHANES.MEC.design1 <- svydesign(
   data = data1
 )
 
-covariates = c("hypertension","age_years","male","diabetes",
+covariates = c("hypertension","I(hypertension^2)","age_years","male","diabetes",
                "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
                "factor(education)","Triglycerides","factor(annual_house_income)",
                "factor(htn_gp)","HDL","LDL","factor(angina_self)",
                "factor(stroke_self)","age_months","factor(kidney_told)","insured",
-               "private_ins","Medicare_ins","sleep_amount","vigorous_activity","vigorous_work",
-               "vigorous_rec","meals_not_home","Chol_self")
+               "private_ins","Medicare_ins","meals_not_home","Chol_self")
 
-covariates = c("hypertension","age_years","male","diabetes",
+covariates = c("hypertension","I(hypertension^2)","age_years","male","diabetes",
                "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
                "factor(education)","Triglycerides","factor(annual_house_income)","private_ins",
-               "factor(angina_self)","sleep_amount")
+               "factor(angina_self)")
+
         
 
 #AIC ----
