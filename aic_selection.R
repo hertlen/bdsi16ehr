@@ -82,6 +82,7 @@ while(done==0){
 colnames(residuals.list) = seq(1:ncol(residuals.list))
 fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
+best.fm #BEST MODEL
 
 plot(aic.history)
 plot(residuals.list[,6])
@@ -145,8 +146,12 @@ while(done==0){
 colnames(residuals.list) = seq(1:ncol(residuals.list))
 fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
+best.fm #BEST MODEL
 
 plot(bic.history)
 plot(residuals.list[,5])
 hist(residuals.list[,5])
 hist(log(residuals.list[,5]))
+plot(residuals.list[,6])
+hist(residuals.list[,6])
+hist(log(residuals.list[,6]))
