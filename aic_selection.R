@@ -22,8 +22,8 @@ covariates = c("hypertension","age_years","male","diabetes",
                "private_ins","Medicare_ins","sleep_amount","vigorous_activity","vigorous_work",
                "vigorous_rec","meals_not_home","Chol_self")
 
-covariates = c("hypertension","age_years","male","diabetes",
-               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
+covariates = c("hypertension","age_years","male","factor(diabetes)",
+               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","factor(obese)",
                "factor(education)","Triglycerides","factor(annual_house_income)","private_ins",
                "factor(angina_self)","sleep_amount")             
 
@@ -88,7 +88,6 @@ plot(aic.history)
 plot(residuals.list[,6])
 hist(residuals.list[,6])
 hist(log(residuals.list[,6]))
-
 
 #BIC -----
 
