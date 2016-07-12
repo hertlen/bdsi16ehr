@@ -22,9 +22,15 @@ covariates = c("hypertension","age_years","male","diabetes",
                "private_ins","Medicare_ins","sleep_amount","vigorous_activity","vigorous_work",
                "vigorous_rec","meals_not_home","Chol_self")
 
+<<<<<<< HEAD
 covariates = c("hypertension","age_years","male","factor(diabetes)",
-               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","factor(obese)",
+               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
                "factor(education)","Triglycerides","factor(annual_house_income)","private_ins",
+=======
+covariates = c("factor(hypertension)","age_years","factor(male)","factor(diabetes)",
+               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","factor(obese)",
+               "factor(education)","Triglycerides","factor(annual_house_income)","factor(private_ins)",
+>>>>>>> 07aa3de7947826f49c45c5a7fe59023a87265c7a
                "factor(angina_self)","sleep_amount")             
 
 #AIC ----
