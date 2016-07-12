@@ -25,10 +25,8 @@ covariates = c("hypertension","age_years","male","diabetes",
 covariates = c("hypertension","age_years","male","diabetes",
                "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
                "factor(education)","Triglycerides","factor(annual_house_income)","private_ins",
-covariates = c("factor(hypertension)","age_years","factor(male)","factor(diabetes)",
-               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","factor(obese)",
-               "factor(education)","Triglycerides","factor(annual_house_income)","factor(private_ins)",
-               "factor(angina_self)","sleep_amount")             
+               "factor(angina_self)","sleep_amount")
+        
 
 #AIC ----
 aic.old = 10^6
