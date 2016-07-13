@@ -32,10 +32,9 @@ roc.curve <- function(x,f,data) {
 
 x <- c("CKD","hypertension","diabetes","BMI","Total_chol",
        "Smoking","Triglycerides","annual_house_income",
-       "htn_gp","HDL","LDL","angina_self","stroke_self",
-       "age_months","kidney_told","Medicare_ins")
+       "HDL","LDL","age_months","Medicare_ins")
 f <- c("CKD","factor(hypertension)","factor(diabetes)","BMI","Total_chol",
        "factor(Smoking)","Triglycerides","factor(annual_house_income)",
-       "factor(htn_gp)","HDL","LDL","factor(angina_self)","factor(stroke_self)",
-       "age_months","factor(kidney_told)","factor(Medicare_ins)")
+       "HDL","LDL","age_months","factor(Medicare_ins)")
+
 roc.curve(x,f,data0)
