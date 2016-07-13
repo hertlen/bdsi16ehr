@@ -1,5 +1,7 @@
 # install.packages(c("ggplot2", "ggthemes", "reshape2", "survey","hexbin"))
 
+library(MASS)
+library(iplots)
 library(hexbin)
 library(RColorBrewer)
 library(survey)
@@ -398,8 +400,6 @@ data2 <- data1[1:5000,1:100]
 scatterplotMatrix(~CKD_epi_eGFR+Triglycerides+BMI+age_years|CKD_stage, data=data2)
 
 #parallel coordinates practice
-library(MASS)
-
 which(colnames(data1)=="Triglycerides")
 which(colnames(data1)=="BMI")
 which(colnames(data1)=="age_years")
@@ -409,24 +409,23 @@ which(colnames(data1)=="hypertension")
 data3 <- data1[1:500,1:100]
 parcoord(data3[,c(14,37,42)])
 
-install.packages("GGally")
-
 data3 <- data1[1:1000,1:100]
 ggpairs(data = data3, columns = c(77,14,42), colour="CKD_stage")
 
 #parallel coordinates plot
 #works best for continuous variables
 #removed Triglycerides outlier
-para.coor.plot <- data1[10000:15000,1:100]
-para.coor.plot <- para.plot[which(para.plot$CKD_stage>0),]
-para.coor.plot <- para.plot[para.plot$Triglycerides!=2243,]
-para.coor.plot$CKD_stage <- factor(para.plot$CKD_stage)
+para.coor.plot <- data1[which(data1$CKD_stage>3),]
+para.coor.plot <- para.coor.plot[1:75000,1:100]
+para.coor.plot <- para.coor.plot[para.coor.plot$Triglycerides!=2243,]
+para.coor.plot$CKD_stage <- factor(para.coor.plot$CKD_stage)
 ggparcoord(para.coor.plot, columns = c(26,37,42,77), 
            groupColumn = 80, missing = "exclude", alphaLines=.5)
 
 #parallel sets plot
-#works best for categorical data
-para.set.plot <- data1[1000:5000,1:100]
-ggparallel(vars = list("diabetes","hypertension","CKD_stage",
-           "private_ins"), data = para.set.plot, 
-           method = "hammock")
+#works for categorical data
+ggparallel(vars = list("sex","CKD","diabetes","hypertension",
+           "private_ins"), data = data1)
+ggparallel(vars = list("sex","diabetes","CKD","hypertension",
+                       "Medicare_ins"), data = data1)
+ggparallel(vars = list("sex","vigorous_rec","CKD","Medicare_ins","hypertension"), data = data1, style="angle")
