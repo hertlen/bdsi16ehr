@@ -1,5 +1,7 @@
 # install.packages(c("ggplot2", "ggthemes", "reshape2", "survey"))
-
+install.packages("lm.beta")
+library(lm.beta)
+library(RColorBrewer)
 library(survey)
 library(ggplot2)
 library(ggthemes)
@@ -113,9 +115,8 @@ colnames(diab.ckdstg) <- c("Stage","Standard_Error","Current_State","Proportion"
 p.diab <- ggplot(diab.ckdstg, aes(x=Stage, y=Proportion)) + 
   geom_bar(stat="identity", position="dodge",aes(fill=Current_State)) + theme_few() + 
   labs(x='CKD Stage', y='Proportion with Diabetes', title='Diabetes and CKD')
-p.diab + scale_fill_manual(values=alpha(c('No_Diabetes'="#8A8985",
-           
-                                                                                                                 'Diabetes'="#100904"), .85))
+p.diab + scale_fill_manual(values=alpha(c('No_Diabetes'="#8A8985",'Diabetes'="#100904"), .85))
+
 #private insurance
 pri.ckdstg.by <- svyby(formula=~factor(private_ins), by=~CKD_stage, 
                        design=NHANES.design, FUN=svymean, na.rm=TRUE)
@@ -171,6 +172,19 @@ colnames(hdl.ckdstg) <- c("Stage","HDL", "SE")
 p.hdl <- ggplot(hdl.ckdstg, aes(x=Stage, y=HDL)) + 
   geom_bar(stat="identity",width=.85) + theme_few() + 
   labs(x='CKD Stage', y='HDL Level', title='HDL and CKD')
+
+#annual household income
+#treating it as a continuous variable here...
+ahi.ckdstg.by <- svyby(formula=~annual_house_income, by=~CKD_stage, 
+                       design=NHANES.design, FUN=svymean, na.rm=TRUE)
+
+ahi.ckdstg <- as.data.frame(ahi.ckdstg.by, header=TRUE)
+
+colnames(ahi.ckdstg) <- c("Stage","AHI", "SE")
+
+p.ahi <- ggplot(ahi.ckdstg, aes(x=Stage, y=AHI)) + 
+  geom_bar(stat="identity",width=.85) + theme_few() + 
+  labs(x='CKD Stage', y='AHI', title='Annual Household Income and CKD')
 
 #graphing several variables at once
 Stages <- c(0,1,2,3,4,5)
@@ -235,9 +249,11 @@ p.time + geom_bar(aes(stage, total, fill=year),
                   position="dodge", stat="identity")
 
 total.time[,4] <- as.character(total.time[,4])
+total.time[,3] <- as.factor(total.time[,3])
+total.time.2 <- melt(total.time, id=c("year","total","SE"))
 
 #Stage vs. Total by Year
-p.time <- ggplot(total.time, aes(x=stage, y=total)) + 
+p.time <- ggplot(total.time2, aes(x=stage, y=total)) + 
   geom_bar(stat="identity", position="dodge",aes(fill=year)) + theme_few() + 
   labs(x='CKD Stage', y='Total Number of People', title='CKD from 2001-2014')
 p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
@@ -245,18 +261,7 @@ p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
   , '6'="#121A52", '7'="#8B215F", 
    '8'="#EB6313"), .85))
 
-#Year vs. Total by Stage
-p.time <- ggplot(total.time, aes(x=year, y=total)) + 
-  geom_bar(stat="identity", position="dodge",aes(fill=stage)) + theme_few() + 
-  labs(x='CKD Stage', y='Total Number of People', title='CKD from 2001-2014')
-p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
-                                          '3'="#1F232B", '4'="#E8AA0C", '5'="#23530D"
-                                          , '6'="#121A52", '7'="#8B215F", 
-                                          '8'="#EB6313"), .85))
-
-total.time[,3] <- as.factor(total.time[,3])
-total.time.2 <- melt(total.time, id=c("year","total","SE"))
-
+#CKD from 2001-2014
 p.time <- ggplot(total.time, aes(x=year,y=total, colour=stage)) + geom_line(aes(group=stage))+
   labs(x='year', y='Total Number of People', title='CKD from 2001-2014')
 p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
@@ -265,13 +270,49 @@ p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
                                           '8'="#EB6313"), .85))
 #subset stages 1-5
 total.time2 <- total.time[total.time$stage!='0',]
-p.time <- ggplot(total.time2, aes(x=year,y=total, colour=stage)) + geom_line(aes(group=stage))+
-  labs(x='year', y='Total Number of People', title='CKD from 2001-2014')
-p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
-                                          '3'="#1F232B", '4'="#E8AA0C", '5'="#23530D"
-                                          , '6'="#121A52", '7'="#8B215F", 
-                                          '8'="#EB6313"), .85)) + theme_few()
+p.time <- ggplot(total.time2, aes(x=year,y=total, colour=stage)) + 
+  geom_line(aes(group=stage))+
+  labs(x='Years (2000s)', y='Number of People (in Millions)', 
+  title='CKD in the U.S. from 2001-2014') + theme_few() + scale_y_continuous(breaks = 
+  c(0,2000000,4000000,6000000,8000000,
+  10000000,12000000,14000000,16000000), 
+  labels = c("0","2","4","6","8","10",
+  "12","14","16")) + scale_x_discrete(
+  labels=c("01-02","03-04","05-06","07-08",
+  "09-10","11-12","13-14")) + scale_colour_discrete(name="CKD Stage")
+
+#Year vs. Total by Stage
+#get color brewer to work
+p.time <- ggplot(total.time2, aes(x=year, y=total)) + 
+  geom_bar(stat="identity", position="dodge",aes(fill=stage)) + theme_few() + 
+  labs(x='CKD Stage', y='Total Number of People', title='CKD from 2001-2014')
+p.time + scale_color_brewer(type="qual",palette="Dark2")
 
 
+#logistic regression for private in and CKD
+#4.7 times less likely to have CKD in you have private insurance
+ins.ckd.glm <- svyglm(CKD~factor(private_ins), 
+                      design=NHANES.design, family=quasibinomial(link="logit"))
+
+#logistic regression for private in and CKD
+#6.1 times more likely to have CKD if you have Medicare
+#-----info from web-----#
+# #Medicare is the federal health insurance program for
+# people who are 65 or older, certain younger people 
+# with disabilities, and people with End-Stage Renal 
+# Disease (permanent kidney failure requiring dialysis or 
+#a transplant, sometimes called ESRD)
+
+#need to adjust for age and then consider
+medin.ckd.glm <- svyglm(CKD~factor(Medicare_ins), 
+                      design=NHANES.design, family=quasibinomial(link="logit"))
+
+
+#standarize coefficients practice
+#can you go from using svy package straight to lm.beta??
+mult.ckd.glm <- svyglm(CKD_epi_eGFR~factor(Medicare_ins)+hypertension+factor(diabetes), 
+                       design=NHANES.design, family="gaussian")
+lm.beta(mult.ckd.glm)
+mult.ckd.glm$coefficients
 
 
