@@ -1,5 +1,4 @@
 library(survey)
-
 data0 = read.csv("NHANES.csv")
 
 
@@ -19,9 +18,12 @@ covariates = c("hypertension","age_years","male","diabetes",
                "factor(education)","Triglycerides","factor(annual_house_income)",
                "factor(htn_gp)","HDL","LDL","factor(angina_self)",
                "factor(stroke_self)","age_months","factor(kidney_told)","insured",
-               "private_ins","Medicare_ins","sleep_amount","vigorous_activity",
-               "meals_not_home","Chol_self")
-              
+               "private_ins","Medicare_ins","meals_not_home","Chol_self")
+
+covariates = c("hypertension","age_years","male","diabetes",
+               "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
+               "factor(education)","Triglycerides","factor(annual_house_income)","private_ins",
+               "factor(angina_self)")
 
 #AIC ----
 aic.old = 10^6
@@ -32,6 +34,7 @@ for (i in 1:length(covariates)){
   fit1a = svyglm(fm, design = NHANES.MEC.design1, family="binomial")
   aic.new = fit1a$aic
   list.aic[i] = aic.new
+  good.predictors = covariates[which(list.aic == min(list.aic))]
   if (aic.new < aic.old){
     aic.old = aic.new
     best.fm = fm
@@ -44,118 +47,244 @@ best.aic = aic.old
 best.is = best.i
 done = 0
 residuals.list = NULL
+k = 0
 while(done==0){
+  k = k+1
+  print(k)
   previous.aic = best.aic
+  previous.fm = best.fm
   list.aic = NULL
   list.cov.aic = NULL
   loop.count = 0
   for (i in 1:length(covariates)){
     if(i %in% best.is) {
-      loop.count = loop.count+1
       next # skip iteration and go to next iteration
       cat(n) }
-    fm = as.formula(paste(deparse(best.fm),"+",covariates[i]))
+    test.predictors = c(good.predictors,covariates[i])
+    fm = as.formula(paste("CKD~",paste(covariates[covariates %in% test.predictors], collapse= "+")))
     fit1a = svyglm(fm, design = NHANES.MEC.design1, family = "binomial")
     aic.new = fit1a$aic
     list.aic = c(list.aic,aic.new)
     list.cov.aic = c(list.cov.aic,covariates[i])
   }
-  if (loop.count != length(covariates)){
-    best.i = which(list.aic == min(list.aic))
-    best.aic = min(list.aic)
-    best.fm = as.formula(paste(deparse(best.fm),"+",list.cov.aic[best.i]))
-    best.is = c(best.is,which(covariates == list.cov.aic[best.i]))
-    aic.history = c(aic.history,min(list.aic))
-    fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family = "binomial")
-    residual.model = resid(fit1a)
-    residuals.list = cbind(residuals.list,residual.model)
-  }
-  if(previous.aic < best.aic | loop.count == length(covariates) ){
+  
+ best.i = which(list.aic == min(list.aic)) 
+ best.cov = list.cov.aic[best.i] 
+ good.predictors = c(good.predictors,best.cov)
+ best.aic = min(list.aic)
+ aic.history = c(aic.history,min(list.aic))
+ best.is = c(best.is,which(covariates == best.cov))
+ best.fm = as.formula(paste("CKD~",paste(covariates[covariates %in% good.predictors], collapse= "+")))
+#  fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family = "binomial")
+#  residual.model = resid(fit1a)
+#  residuals.list = cbind(residuals.list,residual.model)
+ print(best.fm)
+ print(best.aic)
+  if(previous.aic < best.aic ){
     done = 1
+    best.fm = previous.fm 
+    best.aic = previous.aic
   }
 }
+best.fm
 
-colnames(residuals.list) = seq(1:ncol(residuals.list))
+#colnames(residuals.list) = seq(1:ncol(residuals.list))
 fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
+best.fm #BEST MODEL
+best.aic #BEST AIC
+plot(aic.history[2:length(aic.history)])
+# plot(residuals.list[,6])
+# hist(residuals.list[,6])
+# hist(log(residuals.list[,6]))
 
-plot(residuals.list[,6])
-hist(residuals.list[,6])
-hist(log(residuals.list[,6]))
+#BIC -----
+bic.old = 10^6
+list.bic = rep(0,length(covariates))
 
-##CV -----
-index = sample(1:nrow(NHANES.MEC.design1), nrow(NHANES.MEC.design1)/2,
-               replace=FALSE)
-training_set = NHANES.MEC.design1[index,]
-test_set = NHANES.MEC.design1[-index,]
-
-list.acc = rep(0,length(covariates))
-acc.old = 0
 for (i in 1:length(covariates)){
-  print(i)
-  fm = as.formula(paste("CKD ~",covariates[i]))
-  fit1a = svyglm(fm, design = training_set, family="binomial")
-  prediction = predict(fit1a, test_set$variables, type = "response")
-  ind.prediction = as.numeric(rownames(as.data.frame(prediction)))
-  prediction = as.numeric(prediction > min(prediction))
-  tab = table(prediction, test_set$variables$CKD[ind.prediction])
-  acc.new = sum(diag(tab))/sum(tab)
-  list.acc[i] = acc.new
-  if (acc.new > acc.old){
-    acc.old = acc.new
+  fm = as.formula(paste("CKD_epi_eGFR ~",covariates[i]))
+  fit1a = svyglm(fm, design = NHANES.MEC.design1, family="binomial")
+  bic.new = fit1a$bic
+  list.bic[i] = bic.new
+  good.predictors = covariates[which(list.bic == min(list.bic))]
+  if (bic.new < bic.old){
+    bic.old = bic.new
     best.fm = fm
     best.i = i
   }
 }
 
-acc.history = acc.old
-best.acc = acc.old
+bic.history = bic.old
+best.bic = bic.old
 best.is = best.i
 done = 0
 residuals.list = NULL
+j = 0
 while(done==0){
-  previous.acc = best.acc
-  list.acc = NULL
-  list.cov.acc = NULL
+  j = j+1
+  print(j)
+  previous.bic = best.bic
+  previous.fm = best.fm
+  list.bic = NULL
+  list.cov.bic = NULL
   loop.count = 0
   for (i in 1:length(covariates)){
     if(i %in% best.is) {
-      loop.count = loop.count+1
       next # skip iteration and go to next iteration
       cat(n) }
-    fm = as.formula(paste(deparse(best.fm),"+",covariates[i]))
-    fit1a = svyglm(fm, design = training_set, family = "binomial")
-    
-    prediction = predict(fit1a, test_set$variables, type = "response")
-    ind.prediction = as.numeric(rownames(as.data.frame(prediction)))
-    
-    prediction = as.numeric(prediction >= 0.55)
-    tab = table(prediction, test_set$variables$CKD[ind.prediction])
-    acc.new = sum(diag(tab))/sum(tab)
-    
-   
-    list.acc = c(list.acc,acc.new)
-    list.cov.acc = c(list.cov.acc,covariates[i])
+    test.predictors = c(good.predictors,covariates[i])
+    fm = as.formula(paste("CKD~",paste(covariates[covariates %in% test.predictors], collapse= "+")))
+    fit1a = svyglm(fm, design = NHANES.MEC.design1, family = "binomial")
+    bic.new = AIC(fit1a,k = log(length(fit1a)))[2]      
+    list.bic = c(list.bic,bic.new)
+    list.cov.bic = c(list.cov.bic,covariates[i])
   }
-  if (loop.count != length(covariates)){
-    best.i = which(list.acc == min(list.acc))
-    best.acc = min(list.acc)
-    best.fm = as.formula(paste(deparse(best.fm),"+",list.cov.acc[best.i]))
-    best.is = c(best.is,which(covariates == list.cov.acc[best.i]))
-    acc.history = c(acc.history,min(list.acc))
-    fit1a = svyglm(best.fm, design = training_set, family = "binomial")
-    residual.model = resid(fit1a)
-    residuals.list = cbind(residuals.list,residual.model)
-  }
-  if(previous.acc > best.acc | loop.count == length(covariates) ){
+  
+  best.i = which(list.bic == min(list.bic)) 
+  best.cov = list.cov.bic[best.i] 
+  good.predictors = c(good.predictors,best.cov)
+  best.bic = min(list.bic)
+  bic.history = c(bic.history,min(list.bic))
+  best.is = c(best.is,which(covariates == best.cov))
+  best.fm = as.formula(paste("CKD~",paste(covariates[covariates %in% good.predictors], collapse= "+")))
+  #  fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family = "binomial")
+  #  residual.model = resid(fit1a)
+  #  residuals.list = cbind(residuals.list,residual.model)
+  print(best.fm)
+  print(best.bic)
+  if(previous.bic < best.bic ){
     done = 1
+    best.fm = previous.fm 
+    best.bic = previous.bic
+  }
+}
+best.fm
+
+#colnames(residuals.list) = seq(1:ncol(residuals.list))
+fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
+summary(fit1a)
+AIC(fit1a,k = log(length(fit1a)))[2]       
+best.fm #BEST MODEL
+best.bic
+
+plot(bic.history[2:length(bic.history)])
+# plot(residuals.list[,6])
+# hist(residuals.list[,6])
+# hist(log(residuals.list[,6]))
+
+#AIC BACKWARD ----
+aic.old = 10^6
+list.aic = rep(0,length(covariates))
+
+fm = as.formula(paste("CKD~",paste(covariates, collapse= "+")))
+
+aic.history = NULL
+bad.aic = 10^6
+bad.is = NULL
+done = 0
+bad.predictors = NULL
+previous.fm = fm
+j = 0
+while(done==0){
+  j = j+1
+  print(j)
+  previous.aic = bad.aic
+  previous.fm = best.fm
+  list.aic = NULL
+  list.cov.aic = NULL
+  loop.count = 0
+  for (i in 1:length(covariates)){
+    if(i %in% bad.is) {
+      next # skip iteration and go to next iteration
+      cat(n) }
+    test.predictors = c(bad.predictors,covariates[i])
+    fm = as.formula(paste("CKD~",paste(covariates[!covariates %in% test.predictors], collapse= "+")))
+    fit1a = svyglm(fm, design = NHANES.MEC.design1, family = "binomial")
+    aic.new = fit1a$aic
+    list.aic = c(list.aic,aic.new)
+    list.cov.aic = c(list.cov.aic,covariates[i])
+  }
+  
+  bad.i = which(list.aic == min(list.aic)) 
+  worst.cov = list.cov.aic[bad.i] 
+  bad.predictors = c(bad.predictors,worst.cov)
+  bad.aic = min(list.aic)
+  aic.history = c(aic.history,bad.aic)
+  bad.is = c(bad.is,which(covariates == worst.cov))
+  best.fm = as.formula(paste("CKD~",paste(covariates[!covariates %in% bad.predictors], collapse= "+")))
+  print(best.fm)
+  print(bad.aic)
+  
+  if(previous.aic < bad.aic){
+    done = 1
+    best.fm = previous.fm
+    best.aic = previous.aic
   }
 }
 
-colnames(residuals.list) = seq(1:ncol(residuals.list))
-fit1a = svyglm(best.fm, design = training_set, family="binomial")
+fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
+best.fm #BEST MODEL
+best.aic
 
-plot(residuals.list[,6])
-hist(residuals.list[,6])
-hist(log(residuals.list[,6]))
+plot(aic.history)
+
+#BIC BACKWARD ------
+bic.old = 10^6
+list.bic = rep(0,length(covariates))
+
+fm = as.formula(paste("CKD~",paste(covariates, collapse= "+")))
+
+bic.history = NULL
+bad.bic = 10^6
+bad.is = NULL
+done = 0
+bad.predictors = NULL
+previous.fm = fm
+j = 0
+while(done==0){
+  j = j+1
+  print(j)
+  previous.bic = bad.bic
+  previous.fm = best.fm
+  list.bic = NULL
+  list.cov.bic = NULL
+  loop.count = 0
+  for (i in 1:length(covariates)){
+    if(i %in% bad.is) {
+      next # skip iteration and go to next iteration
+      cat(n) }
+    test.predictors = c(bad.predictors,covariates[i])
+    fm = as.formula(paste("CKD~",paste(covariates[!covariates %in% test.predictors], collapse= "+")))
+    fit1a = svyglm(fm, design = NHANES.MEC.design1, family = "binomial")
+    bic.new = AIC(fit1a,k = log(length(fit1a)))[2] 
+    list.bic = c(list.bic,bic.new)
+    list.cov.bic = c(list.cov.bic,covariates[i])
+  }
+  
+  bad.i = which(list.bic == min(list.bic)) 
+  worst.cov = list.cov.bic[bad.i] 
+  bad.predictors = c(bad.predictors,worst.cov)
+  bad.bic = min(list.bic)
+  bic.history = c(bic.history,bad.bic)
+  bad.is = c(bad.is,which(covariates == worst.cov))
+  best.fm = as.formula(paste("CKD~",paste(covariates[!covariates %in% bad.predictors], collapse= "+")))
+  
+  print(best.fm)
+  print(bad.bic)
+  
+  if(previous.bic < bad.bic){
+    done = 1
+    best.fm = previous.fm
+    best.bic = previous.bic
+  }
+}
+
+fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
+summary(fit1a)
+best.fm #BEST MODEL
+best.bic #BEST BIC
+plot(bic.history)
+
+
