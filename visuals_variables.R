@@ -1,18 +1,19 @@
-# install.packages(c("ggplot2", "ggthemes", "reshape2", "survey"))
-install.packages("lm.beta")
-library(lm.beta)
+# install.packages(c("ggplot2", "ggthemes", "reshape2", "survey","hexbin"))
+
+library(hexbin)
 library(RColorBrewer)
 library(survey)
 library(ggplot2)
 library(ggthemes)
 library(reshape2)
+library(GGally)
+library(ggparallel)
 
 data0=read.csv("NHANES.csv")
 data1=data0[data0$SDDSRVYR>=2 & data0$SDDSRVYR<=8,]
 WTMEC14YR = data1$WTMEC2YR/7
 NHANES.design = svydesign(ids=~SDMVPSU , strata=~SDMVSTRA , nest = TRUE , 
                           weights = ~WTMEC14YR, data = data1)
-
 
 #hypertension
 hyp.ckdstg.by <- svyby(formula=~hypertension, by=~CKD_stage, 
@@ -27,7 +28,8 @@ p.hyp <- ggplot(hyp.ckdstg, aes(CKD_stage,hypertension)) +
 
 #Triglycerides
 tri.ckdstg.box <- svyboxplot(Triglycerides~factor(CKD_stage), design = NHANES.design, 
-                             na.rm=TRUE, ylim=c(0,500))
+                             na.rm=TRUE, ylim=c(0,500), xlab="CKD Stage", 
+                             ylab="Triglyceride Level", main="Triglycerides and CKD")
 
 tri.ckdstg.by <- svyby(formula=~Triglycerides, by=~CKD_stage, 
                        design=NHANES.design, FUN=svymean, na.rm=TRUE)
@@ -40,13 +42,14 @@ p.tri <- ggplot(tri.ckdstg, aes(CKD_stage,Triglycerides)) +
        title='Triglycerides and CKD')
 
 #BMI
+#a lot of weird outliers
 bmi.ckdstg <- svyboxplot(BMI~factor(CKD_stage), design = NHANES.design)
 
 bmi.ckdstg.by <- svyby(formula=~BMI, by=~CKD_stage, 
                        design=NHANES.design, FUN=svymean, na.rm=TRUE)
 
 bmi.ckdstg.glm <- svyglm(BMI~factor(CKD_stage), design=NHANES.design)
-bmi.ckdstg.scat <- svyplot(BMI~factor(CKD_stage), design=NHANES.design)
+bmi.ckdstg.scat <- svyplot(BMI~factor(CKD_stage), design=NHANES.design, style="transparent", pch=16)
 
 bmi.ckdstg <- as.data.frame(bmi.ckdstg.by, header=TRUE)
 
@@ -56,8 +59,29 @@ p.bmi <- ggplot(bmi.ckdstg, aes(CKD_stage,BMI)) +
   labs(x='CKD Stage', y='BMI',
        title='BMI and CKD')
 
+#sleep_amount
+sleep.ckdstg <- svyboxplot(sleep_amount~factor(CKD_stage), design = NHANES.design)
+
+sleep.ckdstg.by <- svyby(formula=~sleep_amount, by=~CKD_stage, 
+                       design=NHANES.design, FUN=svymean, na.rm=TRUE)
+
+sleep.ckdstg.scat <- svyplot(Sleep_amount~CKD_stage, design=NHANES.design, style="transparent", pch=16)
+
+sleep.ckdstg <- as.data.frame(sleep.ckdstg.by, header=TRUE)
+
+#weird scale
+p.sleep <- ggplot(sleep.ckdstg, aes(CKD_stage,sleep_amount)) + 
+  geom_point() + theme_minimal() + 
+  labs(x='CKD Stage', y='Sleep Amount',
+       title='Sleep and CKD')
+
+
+
+
 #age_years
-age.ckdstg <- svyboxplot(age_years~factor(CKD_stage), design = NHANES.design, na.rm=TRUE)
+age.ckdstg.box <- svyboxplot(age_years~factor(CKD_stage), 
+                             design = NHANES.design, na.rm=TRUE, 
+                             xlab="CKD Stage", ylab="Age", main="Age and CKD")
 
 age.ckdstg.by <- svyby(formula=~age_years, by=~CKD_stage, 
                        design=NHANES.design, FUN=svymean, na.rm=TRUE)
@@ -71,7 +95,8 @@ p.age <- ggplot(age.ckdstg, aes(CKD_stage,age_years)) +
 
 #Total_chol
 chol.ckdstg <- svyboxplot(Total_chol~factor(CKD_stage), design = NHANES.design, 
-                          ylim=c(50,320))
+                          ylim=c(50,320), xlab="CKD Stage", ylab="Total Cholesterol",
+                          main="Total Cholesterol and CKD")
 
 chol.ckdstg.by <- svyby(formula=~Total_chol, by=~CKD_stage, 
                         design=NHANES.design, FUN=svymean, na.rm=TRUE)
@@ -118,6 +143,8 @@ p.diab <- ggplot(diab.ckdstg, aes(x=Stage, y=Proportion)) +
 p.diab + scale_fill_manual(values=alpha(c('No_Diabetes'="#8A8985",'Diabetes'="#100904"), .85))
 
 #private insurance
+#do they automatically qualify for medicare?
+  #is that what is causing this?
 pri.ckdstg.by <- svyby(formula=~factor(private_ins), by=~CKD_stage, 
                        design=NHANES.design, FUN=svymean, na.rm=TRUE)
 
@@ -149,6 +176,21 @@ p.medin <- ggplot(medin.ckdstg, aes(x=Stage, y=Proportion)) +
 p.medin + scale_fill_manual(values=alpha(c('No_Medin'="#8A8985",
                                          'Medin'="#100904"), .80))
 
+
+#vigorous_rec
+rec.ckdstg.by <- svyby(formula=~factor(vigorous_rec), by=~CKD_stage, 
+                         design=NHANES.design, FUN=svymean, na.rm=TRUE)
+
+rec.ckdstg <- as.data.frame(rec.ckdstg.by, header=TRUE)
+
+colnames(rec.ckdstg) <- c("Stage","No_Rec","Rec", "SE", "SE")
+rec.ckdstg <- melt(rec.ckdstg, id=c("Stage","SE"))
+colnames(rec.ckdstg) <- c("Stage","Standard_Error","Recreation","Proportion")
+rec.ckdstg[,3] <- as.factor(rec.ckdstg[,3])
+
+p.rec <- ggplot(rec.ckdstg, aes(x=Stage, y=Proportion)) + 
+  geom_bar(stat="identity", position="dodge",aes(fill=Recreation)) + theme_few()
+
 #LDL
 ldl.ckdstg.by <- svyby(formula=~LDL, by=~CKD_stage, 
                          design=NHANES.design, FUN=svymean, na.rm=TRUE)
@@ -175,6 +217,7 @@ p.hdl <- ggplot(hdl.ckdstg, aes(x=Stage, y=HDL)) +
 
 #annual household income
 #treating it as a continuous variable here...
+#probably don't want to include this variable in the model...
 ahi.ckdstg.by <- svyby(formula=~annual_house_income, by=~CKD_stage, 
                        design=NHANES.design, FUN=svymean, na.rm=TRUE)
 
@@ -187,6 +230,7 @@ p.ahi <- ggplot(ahi.ckdstg, aes(x=Stage, y=AHI)) +
   labs(x='CKD Stage', y='AHI', title='Annual Household Income and CKD')
 
 #graphing several variables at once
+#weird smoking trend
 Stages <- c(0,1,2,3,4,5)
 df <- cbind(Stages,hyp.ckdstg$hypertension, tri.ckdstg$Triglycerides, 
             bmi.ckdstg$BMI, age.ckdstg$age_years,
@@ -199,9 +243,9 @@ colnames(df) <- c("Stages","Hypertension", "Triglycerides", "BMI", "Age",
                   "Smoke_Never", "No_Diabetes","Diabetes")
 df<-as.data.frame(df)
 p <- ggplot(df)
-p+geom_line(aes(Stages,Diabetes),color="#4daf4a")+ 
-  geom_line(aes(Stages,Smoke_Current),color="#ff7f00")+
+p+geom_line(aes(Stages,Smoke_Current),color="#ff7f00")+
   geom_line(aes(Stages,Smoke_Former),color="#984ea3")+
+  geom_line(aes(Stages,Smoke_Never),color="#780D00")+
   labs(x="CKD Stage",y="Proportion of U.S Population", 
   title="CKD and Potential Risk Factors")+theme_few()
 
@@ -220,12 +264,14 @@ p <- ggplot(chol.df)
 p+geom_line(aes(Stages,Triglycerides),color="#4daf4a")+ 
   geom_line(aes(Stages,LDL),color="#ff7f00")+
   geom_line(aes(Stages,HDL),color="#984ea3")+
-  labs(x="CKD Stage",y="level", 
-       title="CKD and Total Cholesterol Components")+theme_few()
+  labs(x="CKD Stage",y="Level", 
+  title="CKD and Total Cholesterol Components")+theme_few()
 
 chol2.df[,1] <- as.factor(chol2.df[,1])
 
-p <- ggplot(chol2.df, aes(Stages,value,colour=variable)) + geom_line()
+p <- ggplot(chol2.df, aes(Stages,value,colour=variable)) + 
+  geom_line(aes(group=variable)) + labs(x="CKD Stage",
+  y="Cholesterol", title="Cholesterol Components and CKD")+theme_few()
 
 
 #Changes over time
@@ -244,16 +290,12 @@ for (i in 2:8) {
   total.time = rbind(total.time,total.year)
 }
 
-p.time <- ggplot(total.time)
-p.time + geom_bar(aes(stage, total, fill=year), 
-                  position="dodge", stat="identity")
-
 total.time[,4] <- as.character(total.time[,4])
 total.time[,3] <- as.factor(total.time[,3])
 total.time.2 <- melt(total.time, id=c("year","total","SE"))
 
 #Stage vs. Total by Year
-p.time <- ggplot(total.time2, aes(x=stage, y=total)) + 
+p.time <- ggplot(total.time.2, aes(x=value, y=total)) + 
   geom_bar(stat="identity", position="dodge",aes(fill=year)) + theme_few() + 
   labs(x='CKD Stage', y='Total Number of People', title='CKD from 2001-2014')
 p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
@@ -267,7 +309,7 @@ p.time <- ggplot(total.time, aes(x=year,y=total, colour=stage)) + geom_line(aes(
 p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
                                           '3'="#1F232B", '4'="#E8AA0C", '5'="#23530D"
                                           , '6'="#121A52", '7'="#8B215F", 
-                                          '8'="#EB6313"), .85))
+                                          '8'="#EB6313"), .85))+theme_few()
 #subset stages 1-5
 total.time2 <- total.time[total.time$stage!='0',]
 p.time <- ggplot(total.time2, aes(x=year,y=total, colour=stage)) + 
@@ -288,31 +330,103 @@ p.time <- ggplot(total.time2, aes(x=year, y=total)) +
   labs(x='CKD Stage', y='Total Number of People', title='CKD from 2001-2014')
 p.time + scale_color_brewer(type="qual",palette="Dark2")
 
+#diabetes over time
+diab.time = NULL
+for (i in 2:8) {
+  data1=data0[data0$SDDSRVYR==i,]
+  wght = data1$WTMEC2YR
+  NHANES.design2 = svydesign(ids=~SDMVPSU , strata=~SDMVSTRA , 
+                             nest = TRUE , 
+                             weights = ~wght, 
+                             data = data1)
+  total.year = svymean(x=~factor(diabetes), design=NHANES.design2, na.rm=TRUE)
+  total.year = as.data.frame(total.year)
+  total.year$diabetes = seq(from=0, to=1, by=1)
+  total.year$year = rep(i,2)
+  diab.time = rbind(diab.time,total.year)
+}
 
-#logistic regression for private in and CKD
-#4.7 times less likely to have CKD in you have private insurance
-ins.ckd.glm <- svyglm(CKD~factor(private_ins), 
-                      design=NHANES.design, family=quasibinomial(link="logit"))
+diab.time[,4] <- as.character(diab.time[,4])
+diab.time[,3] <- as.factor(diab.time[,3])
 
-#logistic regression for private in and CKD
-#6.1 times more likely to have CKD if you have Medicare
-#-----info from web-----#
-# #Medicare is the federal health insurance program for
-# people who are 65 or older, certain younger people 
-# with disabilities, and people with End-Stage Renal 
-# Disease (permanent kidney failure requiring dialysis or 
-#a transplant, sometimes called ESRD)
-
-#need to adjust for age and then consider
-medin.ckd.glm <- svyglm(CKD~factor(Medicare_ins), 
-                      design=NHANES.design, family=quasibinomial(link="logit"))
+#CKD from 2001-2014
+p.time.diab <- ggplot(diab.time, aes(x=year,y=mean, colour=diabetes)) + geom_line(aes(group=diabetes))+
+  labs(x='Year', y='Proportion of People', title='Diabetes in the U.S. from 2001-2014')
+p.time.diab + scale_fill_manual(values=alpha(c('2'="#780D00",
+                                          '3'="#1F232B", '4'="#E8AA0C", '5'="#23530D"
+                                          , '6'="#121A52", '7'="#8B215F", 
+                                          '8'="#EB6313"), .85))+theme_few()
+#only those with diabetes
+#fix scale
+diab.time2 <- diab.time[diab.time$diabetes!='0',]
+p.time.diab <- ggplot(diab.time2) + geom_line(aes(x=year,y=mean,group=1)) + 
+  theme_few() + labs(x="Survey Cycle",y="Mean Proportion",title="Diabetes and CKD")
 
 
-#standarize coefficients practice
-#can you go from using svy package straight to lm.beta??
-mult.ckd.glm <- svyglm(CKD_epi_eGFR~factor(Medicare_ins)+hypertension+factor(diabetes), 
-                       design=NHANES.design, family="gaussian")
-lm.beta(mult.ckd.glm)
-mult.ckd.glm$coefficients
+#scatterplots with high-density
+#hexagonal binning in svyplot
+#subset data
+svyplot(CKD_epi_eGFR~age_years,design=NHANES.design, style="hex", xbins=100)
+
+datsub <- subset(NHANES.design, Triglycerides<1000)
+svyplot(CKD_epi_eGFR~Triglycerides, 
+        design=datsub, style="hex", xbins=40)
+
+datsub <- subset(NHANES.design, UACR<20)
+svyplot(CKD_epi_eGFR~UACR, 
+        design=datsub, style="grayhex", xbins=50)
+
+datsub <- subset(NHANES.design,BMI<40)
+svyplot(CKD_epi_eGFR~BMI, 
+        design=datsub, style="grayhex", xbins=100)
+
+#second option is much better
+x <- rnorm(10000)
+y <- rnorm(10000)
+plot(x,y)
+bin<-hexbin(x, y, xbins=50) 
+plot(bin)
 
 
+#series of scatterplots, unweighted
+install.packages("car")
+library(car)
+scatterplotMatrix(~CKD_epi_eGFR+Triglycerides+BMI+age_years|CKD_stage, data=data1)
+
+#subset data1 for less dense scatterplots
+data2 <- data1[1:5000,1:100]
+scatterplotMatrix(~CKD_epi_eGFR+Triglycerides+BMI+age_years|CKD_stage, data=data2)
+
+#parallel coordinates practice
+library(MASS)
+
+which(colnames(data1)=="Triglycerides")
+which(colnames(data1)=="BMI")
+which(colnames(data1)=="age_years")
+which(colnames(data1)=="CKD_epi_eGFR")
+which(colnames(data1)=="private_ins")
+which(colnames(data1)=="hypertension")
+data3 <- data1[1:500,1:100]
+parcoord(data3[,c(14,37,42)])
+
+install.packages("GGally")
+
+data3 <- data1[1:1000,1:100]
+ggpairs(data = data3, columns = c(77,14,42), colour="CKD_stage")
+
+#parallel coordinates plot
+#works best for continuous variables
+#removed Triglycerides outlier
+para.coor.plot <- data1[10000:15000,1:100]
+para.coor.plot <- para.plot[which(para.plot$CKD_stage>0),]
+para.coor.plot <- para.plot[para.plot$Triglycerides!=2243,]
+para.coor.plot$CKD_stage <- factor(para.plot$CKD_stage)
+ggparcoord(para.coor.plot, columns = c(26,37,42,77), 
+           groupColumn = 80, missing = "exclude", alphaLines=.5)
+
+#parallel sets plot
+#works best for categorical data
+para.set.plot <- data1[1000:5000,1:100]
+ggparallel(vars = list("diabetes","hypertension","CKD_stage",
+           "private_ins"), data = para.set.plot, 
+           method = "hammock")
