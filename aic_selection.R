@@ -30,8 +30,8 @@ aic.old = 10^6
 list.aic = rep(0,length(covariates))
 
 for (i in 1:length(covariates)){
-  fm = as.formula(paste("CKD_epi_eGFR ~",covariates[i]))
-  fit1a = svyglm(fm, design = NHANES.MEC.design1, family="gaussian")
+  fm = as.formula(paste("CKD ~",covariates[i]))
+  fit1a = svyglm(fm, design = NHANES.MEC.design1, family="binomial")
   aic.new = fit1a$aic
   list.aic[i] = aic.new
   good.predictors = covariates[which(list.aic == min(list.aic))]
@@ -47,7 +47,10 @@ best.aic = aic.old
 best.is = best.i
 done = 0
 residuals.list = NULL
+k = 0
 while(done==0){
+  k = k+1
+  print(k)
   previous.aic = best.aic
   previous.fm = best.fm
   list.aic = NULL
@@ -75,10 +78,12 @@ while(done==0){
 #  fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family = "binomial")
 #  residual.model = resid(fit1a)
 #  residuals.list = cbind(residuals.list,residual.model)
-  
+ print(best.fm)
+ print(best.aic)
   if(previous.aic < best.aic ){
     done = 1
     best.fm = previous.fm 
+    best.aic = previous.aic
   }
 }
 best.fm
@@ -87,7 +92,7 @@ best.fm
 fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
 best.fm #BEST MODEL
-
+best.aic #BEST AIC
 plot(aic.history[2:length(aic.history)])
 # plot(residuals.list[,6])
 # hist(residuals.list[,6])
@@ -99,7 +104,7 @@ list.bic = rep(0,length(covariates))
 
 for (i in 1:length(covariates)){
   fm = as.formula(paste("CKD_epi_eGFR ~",covariates[i]))
-  fit1a = svyglm(fm, design = NHANES.MEC.design1, family="gaussian")
+  fit1a = svyglm(fm, design = NHANES.MEC.design1, family="binomial")
   bic.new = fit1a$bic
   list.bic[i] = bic.new
   good.predictors = covariates[which(list.bic == min(list.bic))]
@@ -115,7 +120,10 @@ best.bic = bic.old
 best.is = best.i
 done = 0
 residuals.list = NULL
+j = 0
 while(done==0){
+  j = j+1
+  print(j)
   previous.bic = best.bic
   previous.fm = best.fm
   list.bic = NULL
@@ -143,10 +151,12 @@ while(done==0){
   #  fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family = "binomial")
   #  residual.model = resid(fit1a)
   #  residuals.list = cbind(residuals.list,residual.model)
-  
+  print(best.fm)
+  print(best.bic)
   if(previous.bic < best.bic ){
     done = 1
     best.fm = previous.fm 
+    best.bic = previous.bic
   }
 }
 best.fm
@@ -156,13 +166,14 @@ fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
 AIC(fit1a,k = log(length(fit1a)))[2]       
 best.fm #BEST MODEL
+best.bic
 
 plot(bic.history[2:length(bic.history)])
 # plot(residuals.list[,6])
 # hist(residuals.list[,6])
 # hist(log(residuals.list[,6]))
 
-#AIC BACKWARD----
+#AIC BACKWARD ----
 aic.old = 10^6
 list.aic = rep(0,length(covariates))
 
@@ -174,7 +185,10 @@ bad.is = NULL
 done = 0
 bad.predictors = NULL
 previous.fm = fm
+j = 0
 while(done==0){
+  j = j+1
+  print(j)
   previous.aic = bad.aic
   previous.fm = best.fm
   list.aic = NULL
@@ -199,17 +213,20 @@ while(done==0){
   aic.history = c(aic.history,bad.aic)
   bad.is = c(bad.is,which(covariates == worst.cov))
   best.fm = as.formula(paste("CKD~",paste(covariates[!covariates %in% bad.predictors], collapse= "+")))
-  
+  print(best.fm)
+  print(bad.aic)
   
   if(previous.aic < bad.aic){
     done = 1
     best.fm = previous.fm
+    best.aic = previous.aic
   }
 }
 
 fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
 best.fm #BEST MODEL
+best.aic
 
 plot(aic.history)
 
@@ -225,7 +242,10 @@ bad.is = NULL
 done = 0
 bad.predictors = NULL
 previous.fm = fm
+j = 0
 while(done==0){
+  j = j+1
+  print(j)
   previous.bic = bad.bic
   previous.fm = best.fm
   list.bic = NULL
@@ -251,17 +271,20 @@ while(done==0){
   bad.is = c(bad.is,which(covariates == worst.cov))
   best.fm = as.formula(paste("CKD~",paste(covariates[!covariates %in% bad.predictors], collapse= "+")))
   
+  print(best.fm)
+  print(bad.bic)
   
   if(previous.bic < bad.bic){
     done = 1
     best.fm = previous.fm
+    best.bic = previous.bic
   }
 }
 
 fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
 best.fm #BEST MODEL
-
+best.bic #BEST BIC
 plot(bic.history)
 
 
