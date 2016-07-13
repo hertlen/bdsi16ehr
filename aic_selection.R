@@ -284,7 +284,7 @@ while(done==0){
 fit1a = svyglm(best.fm, design = NHANES.MEC.design1, family="binomial")
 summary(fit1a)
 best.fm #BEST MODEL
-best.bic
+best.bic #BEST BIC
 plot(bic.history)
 
 
