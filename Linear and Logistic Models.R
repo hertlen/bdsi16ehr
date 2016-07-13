@@ -25,7 +25,7 @@ temp.svd = svydesign(
 # races : 1 = mexican american, 2 = other hispanic, 3 = non-hispanic white, 4 = non-hispanic black,
 # 5 = other
 
-model_ckd1 = svyglm(CKD_epi_eGFR ~ age_years + BMI + Triglycerides, design = temp.svd)
+model_ckd1 = svyglm(CKD_epi_eGFR ~ factor(obese) + BMI + Triglycerides, design = temp.svd)
 
 model_ckd2 = svyglm(factor(CKD) ~ age_years + hypertension + BMI + Triglycerides
                    + Total_chol, design = temp.svd, family = quasibinomial)
