@@ -1,5 +1,12 @@
 # install.packages(c("ggplot2", "ggthemes", "reshape2", "survey"))
 
+<<<<<<< HEAD
+=======
+library(MASS)
+library(iplots)
+library(hexbin)
+library(RColorBrewer)
+>>>>>>> a05e05e3faa5b2f4c7bb660ecce365dcd5cf443f
 library(survey)
 library(ggplot2)
 library(ggthemes)
@@ -275,3 +282,84 @@ p.time + scale_fill_manual(values=alpha(c('2'="#780D00",
 
 
 
+<<<<<<< HEAD
+=======
+#CKD from 2001-2014
+p.time.diab <- ggplot(diab.time, aes(x=year,y=mean, colour=diabetes)) + geom_line(aes(group=diabetes))+
+  labs(x='Year', y='Proportion of People', title='Diabetes in the U.S. from 2001-2014')
+p.time.diab + scale_fill_manual(values=alpha(c('2'="#780D00",
+                                          '3'="#1F232B", '4'="#E8AA0C", '5'="#23530D"
+                                          , '6'="#121A52", '7'="#8B215F", 
+                                          '8'="#EB6313"), .85))+theme_few()
+#only those with diabetes
+#fix scale
+diab.time2 <- diab.time[diab.time$diabetes!='0',]
+p.time.diab <- ggplot(diab.time2) + geom_line(aes(x=year,y=mean,group=1)) + 
+  theme_few() + labs(x="Survey Cycle",y="Mean Proportion",title="Diabetes and CKD")
+
+
+#scatterplots with high-density
+#hexagonal binning in svyplot
+#subset data
+svyplot(CKD_epi_eGFR~age_years,design=NHANES.design, style="hex", xbins=100)
+
+datsub <- subset(NHANES.design, Triglycerides<1000)
+svyplot(CKD_epi_eGFR~Triglycerides, 
+        design=datsub, style="hex", xbins=40)
+
+datsub <- subset(NHANES.design, UACR<20)
+svyplot(CKD_epi_eGFR~UACR, 
+        design=datsub, style="grayhex", xbins=50)
+
+datsub <- subset(NHANES.design,BMI<40)
+svyplot(CKD_epi_eGFR~BMI, 
+        design=datsub, style="grayhex", xbins=100)
+
+#second option is much better
+x <- rnorm(10000)
+y <- rnorm(10000)
+plot(x,y)
+bin<-hexbin(x, y, xbins=50) 
+plot(bin)
+
+
+#series of scatterplots, unweighted
+install.packages("car")
+library(car)
+scatterplotMatrix(~CKD_epi_eGFR+Triglycerides+BMI+age_years|CKD_stage, data=data1)
+
+#subset data1 for less dense scatterplots
+data2 <- data1[1:5000,1:100]
+scatterplotMatrix(~CKD_epi_eGFR+Triglycerides+BMI+age_years|CKD_stage, data=data2)
+
+#parallel coordinates practice
+which(colnames(data1)=="Triglycerides")
+which(colnames(data1)=="BMI")
+which(colnames(data1)=="age_years")
+which(colnames(data1)=="CKD_epi_eGFR")
+which(colnames(data1)=="private_ins")
+which(colnames(data1)=="hypertension")
+data3 <- data1[1:500,1:100]
+parcoord(data3[,c(14,37,42)])
+
+data3 <- data1[1:1000,1:100]
+ggpairs(data = data3, columns = c(77,14,42), colour="CKD_stage")
+
+#parallel coordinates plot
+#works best for continuous variables
+#removed Triglycerides outlier
+para.coor.plot <- data1[which(data1$CKD_stage>3),]
+para.coor.plot <- para.coor.plot[1:75000,1:100]
+para.coor.plot <- para.coor.plot[para.coor.plot$Triglycerides!=2243,]
+para.coor.plot$CKD_stage <- factor(para.coor.plot$CKD_stage)
+ggparcoord(para.coor.plot, columns = c(26,37,42,77), 
+           groupColumn = 80, missing = "exclude", alphaLines=.5)
+
+#parallel sets plot
+#works for categorical data
+ggparallel(vars = list("sex","CKD","diabetes","hypertension",
+           "private_ins"), data = data1)
+ggparallel(vars = list("sex","diabetes","CKD","hypertension",
+                       "Medicare_ins"), data = data1)
+ggparallel(vars = list("sex","vigorous_rec","CKD","Medicare_ins","hypertension"), data = data1, style="angle")
+>>>>>>> a05e05e3faa5b2f4c7bb660ecce365dcd5cf443f
