@@ -19,9 +19,6 @@ covariates = c("hypertension","age_years","male","diabetes",
                "HDL","LDL",
                "factor(stroke_self)","age_months","insured",
                "private_ins","Medicare_ins","meals_not_home")
-               "factor(htn_gp)","HDL","LDL",
-               "factor(stroke_self)","age_months","insured",
-               "private_ins","Medicare_ins","meals_not_home","Chol_self")
 
 covariates = c("hypertension","age_years","male","diabetes",
                "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
