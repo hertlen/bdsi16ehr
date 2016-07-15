@@ -34,6 +34,8 @@ k_fold_cross_validate = function(data, binomial = TRUE, covariates,
   grouped_errors = vector("list", num_folds)
   errors = numeric(0)
   for(j in 1:num_folds){
+    print(paste("working on fold", j, "of", num_folds, "total"))
+    
     test_data = subset(survey_design, survey_design$variables$folds == j)
     training_data = subset(survey_design, survey_design$variables$folds != j)
     survey_glm = svyglm(
@@ -43,9 +45,6 @@ k_fold_cross_validate = function(data, binomial = TRUE, covariates,
     )
     errors = matrix(NA, nrow = nrow(test_data$variables), ncol = 2)
     for(k in 1:nrow(test_data$variables)) {
-      
-      print(paste("working on data point", k, "from training set", j))
-      
       predict_set = as.data.frame(matrix(nrow = 1, ncol = length(covariates)))
       # for each covariate, extract the value from the test set
       for(l in 1:length(covariates)){
@@ -59,19 +58,13 @@ k_fold_cross_validate = function(data, binomial = TRUE, covariates,
       if(all(!is.na(predict_set)) & all(!is.na(test_data$variables[k, ]$CKD))) {
         
         prediction = predict(survey_glm, newdata = predict_set, type = "response")
-        
-        # print(paste("model predicts", prediction[1]))
-        
         response_true = isTRUE(test_data$variables[k, ]$CKD == 1)
         
-        # print(paste("true value for CKD was", response_true))
         if(prediction[1] > 0.75 & response_true | prediction[1] < 0.25 & !response_true) {
           errors[k, 2] = 0
         } else {
           errors[k, 2] = 1
         }
-        
-        # print(paste("found an error of: ", errors[k]))
       }
     }
     grouped_errors[[j]] = errors
@@ -108,6 +101,8 @@ k_fold_cross_validate_gaussian = function(data, covariates,
   grouped_errors = vector("list", num_folds)
   errors = numeric(0)
   for(j in 1:num_folds){
+    print(paste("working on fold", j, "of", num_folds, "total"))
+    
     test_data = subset(survey_design, survey_design$variables$folds == j)
     training_data = subset(survey_design, survey_design$variables$folds != j)
     survey_glm = svyglm(
@@ -117,7 +112,6 @@ k_fold_cross_validate_gaussian = function(data, covariates,
     )
     errors = matrix(NA, nrow = nrow(test_data$variables), ncol = 2)
     for(k in 1:nrow(test_data$variables)) {
-      print(paste("working on data point", k, "from training set", j))
       predict_set = as.data.frame(matrix(nrow = 1, ncol = length(covariates)))
       # for each covariate, extract the value from the test set
       for(l in 1:length(covariates)){
