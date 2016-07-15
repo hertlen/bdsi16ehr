@@ -1,9 +1,11 @@
 library(survey)
 data0 = read.csv("NHANES.csv")
-
+data0 = data0[data0$age_years >= 18,]
 
 data1 <- data0[data0$SDDSRVYR >= 2 & data0$SDDSRVYR <= 8,]
 WTMEC_1 <- data1$WTMEC2YR/7
+
+
 
 NHANES.MEC.design1 <- svydesign(
   ids = ~SDMVPSU ,         
@@ -44,21 +46,29 @@ covariates2 = c("hypertension","BMI","diabetes","factor(Smoking)",
                 "LDL","age_years"
                 )
 #BIC 11874
+#BIC 8657 wout
 
 covariates2 = c("hypertension","male","diabetes","factor(education)",
                 "Triglycerides","age_months","private_ins"
 )
 #BIC 13926
+#BIC 10755 wout
 
 covariates2 = c("hypertension","male","diabetes","LDL","HDL","Total_chol",
                 "Triglycerides","age_months","private_ins"
 )
 #BIC 7887
-
+#BIC 5703
 covariates2 = c("hypertension","male","diabetes","factor(education)",
                 "LDL","age_months","private_ins"
 )
 #BIC 7176
+#BIC 5542 wout
+
+covariates2 = c("hypertension","male","diabetes",
+                "LDL","age_months","private_ins"
+)
+#5699.97 w/out <18 !!!!!!!
 
 
 fm = as.formula(paste("CKD~",paste(covariates2, collapse= "+")))
