@@ -18,12 +18,18 @@ covariates = c("hypertension","age_years","male","diabetes",
                "factor(education)","Triglycerides","factor(annual_house_income)",
                "HDL","LDL",
                "factor(stroke_self)","age_months","insured",
-               "private_ins","Medicare_ins","meals_not_home")
+               "private_ins","Medicare_ins","meals_not_home",
+
+               "factor(htn_gp)",
+               "factor(stroke_self)","age_months","insured",
+               "private_ins","Medicare_ins","meals_not_home","Chol_self")
 
 covariates = c("hypertension","age_years","male","diabetes",
                "BMI","Total_chol","factor(Smoking)","factor(race_eth)","obese",
-               "factor(education)","Triglycerides","factor(annual_house_income)","private_ins",
-               "factor(angina_self)")
+               "factor(education)","Triglycerides","factor(annual_house_income)",
+               "HDL","LDL",
+               "factor(stroke_self)","age_months","insured",
+               "private_ins","meals_not_home")
 
 #AIC ----
 aic.old = 10^6
