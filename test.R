@@ -55,20 +55,12 @@ chosen_glm = svyglm(
   family = gaussian
 )
 
-###
-covariates_test = c("hypertension", "male", "diabetes", "race2", "race3", "race4", "race5",
-                    "agegrp2", "agegrp3", "Total_chol")
-
-# 85% observations used (34320)
-#     mean     SE
-# error 12.936 0.0763
-
-
-###
+### FINAL GLM
 
 covariates_test = c("hypertension", "male", "diabetes", "race2", "race3", "race4", "race5",
                     "agegrp2", "agegrp3")
 # 85% observations used (34332)
+# predicting eGFR:
 #         mean     SE
 # error 12.916 0.0768
 
