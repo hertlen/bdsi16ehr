@@ -7,15 +7,13 @@ source("k-fold cross-validation.R")
 
 data0 = read.csv("NHANES.csv")
 data0 = data0[data0$age_years >= 18, ]
+agegrp2 = as.numeric((data0$age_years >=40 & data0$age_years<=59))
+agegrp3 = as.numeric((data0$age_years >= 60))
+data0 = cbind(data0, agegrp2, agegrp3)
 
 smoking_former = as.numeric((data0$Smoking == "Former Smoker"))
 smoking_current = as.numeric((data0$Smoking == "Current Smoker"))
 data0 = cbind(data0, smoking_former, smoking_current)
-
-htn_gp2 = as.numeric((data0$htn_gp == 2))
-htn_gp3 = as.numeric((data0$htn_gp == 3))
-htn_gp4 = as.numeric((data0$htn_gp == 4))
-data0 = cbind(data0, htn_gp2, htn_gp3, htn_gp4)
 
 education2 = as.numeric((data0$education == 2))
 education3 = as.numeric((data0$education == 3))
@@ -23,6 +21,79 @@ education4 = as.numeric((data0$education == 4))
 education5 = as.numeric((data0$education == 5))
 
 data0 = cbind(data0, education2, education3, education4, education5)
+
+covariates_test = c("hypertension", "male", "diabetes", "race2", "race3", "race4", "race5",
+                    "agegrp2", "agegrp3")
+
+
+race2 = as.numeric((data0$race_eth == 2))
+race3 = as.numeric((data0$race_eth == 3))
+race4 = as.numeric((data0$race_eth == 4))
+race5 = as.numeric((data0$race_eth == 5))
+
+data0 = cbind(data0, race2, race3, race4, race5)
+
+
+
+
+### FINAL GLM
+
+covariates_test = c("hypertension", "male", "diabetes", "race2", "race3", "race4", "race5",
+                    "agegrp2", "agegrp3")
+# 85% observations used (34332)
+# predicting eGFR:
+#         mean     SE
+# error 12.916 0.0768
+
+## bootstrapping
+
+
+
+test = k_fold_cross_validate(data0, binomial = FALSE, covariates = covariates_test, num_folds = 10,
+                             first.year = 2, last.year = 8)
+
+complete_errors = as.data.frame(rbind(test[[1]], test[[2]], test[[3]], test[[4]], test[[5]], 
+                                      test[[6]],test[[7]],test[[8]],test[[9]],test[[10]]))
+
+colnames(complete_errors) = c("SEQN", "error")
+ordered_errors = complete_errors[order(complete_errors$SEQN, decreasing = FALSE), ]
+first.seqn = ordered_errors[1,1]
+last.seqn = ordered_errors[nrow(ordered_errors), 1]
+ordered_errors[,2] = sqrt(ordered_errors[,2])
+data.of.interest = data0[data0$SEQN >= first.seqn & data0$SEQN <= last.seqn, ]
+
+data.of.interest = cbind(data.of.interest, ordered_errors[,2])
+colnames(data.of.interest)[length(colnames(data.of.interest))] = "error"
+
+(sum(!is.na(ordered_errors[,2])))
+(percent_validated = sum(!is.na(ordered_errors[,2]))/nrow(ordered_errors))
+
+weight = data.of.interest$WTMEC2YR / (8 - 2 + 1)
+
+svyobj.with.errors = svydesign(
+  ids = ~SDMVPSU,
+  strata = ~SDMVSTRA,
+  nest = TRUE,
+  weights = ~weight,
+  data = data.of.interest
+)
+
+weighted_errors = svymean(
+  x = ~error,
+  design = svyobj.with.errors,
+  na.rm = TRUE
+)
+
+weighted_errors
+
+
+
+
+
+
+
+##########################################################################################
+
 
 covariates_test = c("hypertension", "diabetes", "BMI", "smoking_former", "smoking_current",
                     "LDL", "age_years")
@@ -47,7 +118,7 @@ covariates_test = c("hypertension", "male", "diabetes", "LDL", "HDL", "Total_cho
 #######################
 
 covariates_test = c("hypertension", "male", "diabetes", "education2", "education3", "education4", "education5",
-             "LDL", "age_months", "private_ins")
+                    "LDL", "age_months", "private_ins")
 ## eGFR model:
 # 19% valid observations (7667)
 # 11.8 error, 0.148 SE
@@ -61,49 +132,25 @@ covariates_test = c("hypertension", "male", "diabetes", "LDL", "age_months", "pr
 # BIC: 5699
 
 #####################
-race2 = as.numeric((data0$race_eth == 2))
-race3 = as.numeric((data0$race_eth == 3))
-race4 = as.numeric((data0$race_eth == 4))
-race5 = as.numeric((data0$race_eth == 5))
-
-data0 = cbind(data0, race2, race3, race4, race5)
-
-covariates_test = c("hypertension", "male", "diabetes", "age_months", "race2",
+covariates_test = c("hypertension", "male", "diabetes", "agegrp2", "agegrp3", "race2",
                     "race3", "race4", "race5")
 ## eGFR model:
-# % valid observations
+# 58% valid observations
+# 11.936 error, 0.085 SE
+# BIC: 5296132
 
-test = k_fold_cross_validate(data0, binomial = FALSE, covariates = covariates_test, num_folds = 5,
-                             first.year = 2, last.year = 8)
-
-complete_errors = as.data.frame(rbind(test[[1]], test[[2]], test[[3]], test[[4]], test[[5]]))
-
-colnames(complete_errors) = c("SEQN", "error")
-ordered_errors = complete_errors[order(complete_errors$SEQN, decreasing = FALSE), ]
-first.seqn = ordered_errors[1,1]
-last.seqn = ordered_errors[nrow(ordered_errors), 1]
-ordered_errors[,2] = sqrt(ordered_errors[,2])
-data.of.interest = data0[data0$SEQN >= first.seqn & data0$SEQN <= last.seqn, ]
-data.of.interest = cbind(data.of.interest, ordered_errors[,2])
-colnames(data.of.interest)[length(colnames(data.of.interest))] = "error"
-
-(sum(!is.na(ordered_errors[,2])))
-(percent_validated = sum(!is.na(ordered_errors[,2]))/nrow(ordered_errors))
-
-weight = data.of.interest$WTMEC2YR / (8 - 2 + 1)
-
-svyobj.with.errors = svydesign(
+weight = data0$WTMEC2YR / 7
+survey_design = svydesign(
   ids = ~SDMVPSU,
   strata = ~SDMVSTRA,
   nest = TRUE,
   weights = ~weight,
-  data = data.of.interest
+  data = data0
 )
 
-weighted_errors = svymean(
-  x = ~error,
-  design = svyobj.with.errors,
-  na.rm = TRUE
+chosen_glm = svyglm(
+  CKD_epi_eGFR ~ hypertension + diabetes + agegrp2 + agegrp3 + male + race2 + race3 + race4 + 
+    race5,
+  design = survey_design,
+  family = gaussian
 )
-
-weighted_errors
