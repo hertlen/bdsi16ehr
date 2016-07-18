@@ -36,8 +36,8 @@ k_fold_cross_validate = function(data, binomial = TRUE, covariates,
   for(j in 1:num_folds){
     print(paste("working on fold", j, "of", num_folds, "total"))
     
-    test_data = subset(survey_design, survey_design$variables$folds == j)
-    training_data = subset(survey_design, survey_design$variables$folds != j)
+    test_data = subset(survey_design, survey_design$variables$folds != j)
+    training_data = subset(survey_design, survey_design$variables$folds == j)
     survey_glm = svyglm(
       equation,
       design = training_data,

@@ -15,11 +15,6 @@ smoking_former = as.numeric((data0$Smoking == "Former Smoker"))
 smoking_current = as.numeric((data0$Smoking == "Current Smoker"))
 data0 = cbind(data0, smoking_former, smoking_current)
 
-htn_gp2 = as.numeric((data0$htn_gp == 2))
-htn_gp3 = as.numeric((data0$htn_gp == 3))
-htn_gp4 = as.numeric((data0$htn_gp == 4))
-data0 = cbind(data0, htn_gp2, htn_gp3, htn_gp4)
-
 education2 = as.numeric((data0$education == 2))
 education3 = as.numeric((data0$education == 3))
 education4 = as.numeric((data0$education == 4))
@@ -39,21 +34,7 @@ race5 = as.numeric((data0$race_eth == 5))
 data0 = cbind(data0, race2, race3, race4, race5)
 
 
-weight = data0$WTMEC2YR / 7
-survey_design = svydesign(
-  ids = ~SDMVPSU,
-  strata = ~SDMVSTRA,
-  nest = TRUE,
-  weights = ~weight,
-  data = data0
-)
 
-chosen_glm = svyglm(
-  CKD_epi_eGFR ~ hypertension + diabetes + agegrp2 + agegrp3 + male + race2 + race3 + race4 + 
-    race5,
-  design = survey_design,
-  family = gaussian
-)
 
 ### FINAL GLM
 
@@ -64,12 +45,15 @@ covariates_test = c("hypertension", "male", "diabetes", "race2", "race3", "race4
 #         mean     SE
 # error 12.916 0.0768
 
+## bootstrapping
 
 
-test = k_fold_cross_validate(data0, binomial = FALSE, covariates = covariates_test, num_folds = 5,
+
+test = k_fold_cross_validate(data0, binomial = FALSE, covariates = covariates_test, num_folds = 10,
                              first.year = 2, last.year = 8)
 
-complete_errors = as.data.frame(rbind(test[[1]], test[[2]], test[[3]], test[[4]], test[[5]]))
+complete_errors = as.data.frame(rbind(test[[1]], test[[2]], test[[3]], test[[4]], test[[5]], 
+                                      test[[6]],test[[7]],test[[8]],test[[9]],test[[10]]))
 
 colnames(complete_errors) = c("SEQN", "error")
 ordered_errors = complete_errors[order(complete_errors$SEQN, decreasing = FALSE), ]
@@ -77,6 +61,7 @@ first.seqn = ordered_errors[1,1]
 last.seqn = ordered_errors[nrow(ordered_errors), 1]
 ordered_errors[,2] = sqrt(ordered_errors[,2])
 data.of.interest = data0[data0$SEQN >= first.seqn & data0$SEQN <= last.seqn, ]
+
 data.of.interest = cbind(data.of.interest, ordered_errors[,2])
 colnames(data.of.interest)[length(colnames(data.of.interest))] = "error"
 
@@ -153,3 +138,19 @@ covariates_test = c("hypertension", "male", "diabetes", "agegrp2", "agegrp3", "r
 # 58% valid observations
 # 11.936 error, 0.085 SE
 # BIC: 5296132
+
+weight = data0$WTMEC2YR / 7
+survey_design = svydesign(
+  ids = ~SDMVPSU,
+  strata = ~SDMVSTRA,
+  nest = TRUE,
+  weights = ~weight,
+  data = data0
+)
+
+chosen_glm = svyglm(
+  CKD_epi_eGFR ~ hypertension + diabetes + agegrp2 + agegrp3 + male + race2 + race3 + race4 + 
+    race5,
+  design = survey_design,
+  family = gaussian
+)
