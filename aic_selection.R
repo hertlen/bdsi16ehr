@@ -15,6 +15,25 @@ race5 = as.numeric((data0$race_eth == 5))
 data0 = cbind(data0, race2, race3, race4, race5)
 
 data1 <- data0[data0$SDDSRVYR >= 2 & data0$SDDSRVYR <= 8,]
+
+load("AgePop2000.RData")
+AgePop = c(sum(AgePop2000[1:10,2]),sum(AgePop2000[11:14,2]),
+           sum(AgePop2000[15:20,2]),sum(AgePop2000[21:24,2]))
+
+AgeWeight = AgePop/sum(AgePop)
+
+
+data1 <- data0[data0$SDDSRVYR >= 2 & data0$SDDSRVYR <= 8,]
+data1$age_group = ifelse(data1$age_years>=19 & data1$age_years<=39, "19-39",NA)
+data1$age_group = ifelse(data1$age_years>=40 & data1$age_years<=59, "40-59",data1$age_group)
+data1$age_group = ifelse(data1$age_years>=60, ">=60",data1$age_group)
+data1$age_group = factor(data1$age_group,levels=c("19-39","40-59",">=60"))
+
+age.4059 = as.numeric((data1$age_group == "40-59"))
+age.60 = as.numeric((data1$age_group == ">=60"))
+data1 = cbind(data1, age.4059,age.60)
+
+
 WTMEC_1 <- data1$WTMEC2YR/7
 
 
@@ -45,11 +64,11 @@ covariates = c("hypertension","age_years","male","diabetes",
                "age_months","insured",
                "private_ins")
 
-covariates = c("hypertension","age_years","male","diabetes",
+covariates = c("hypertension","male","diabetes","age.4059","age.60",
                "BMI","Total_chol","obese",
                "Triglycerides",
                "HDL","LDL",
-               "age_months","insured",
+               "insured",
                "private_ins",
                "race2",
                "race3", "race4", "race5",
@@ -71,33 +90,52 @@ covariates2 = c("hypertension","BMI","diabetes","factor(Smoking)",
                 )
 #BIC 11874
 #BIC 8657 wout
+# 3133655 
 
 covariates2 = c("hypertension","male","diabetes","factor(education)",
                 "Triglycerides","age_months","private_ins"
 )
 #BIC 13926
 #BIC 10755 wout
+# 3887183 
 
 covariates2 = c("hypertension","male","diabetes","LDL","HDL","Total_chol",
                 "Triglycerides","age_months","private_ins"
 )
 #BIC 7887
 #BIC 5703
+# 1991385 
 covariates2 = c("hypertension","male","diabetes","factor(education)",
                 "LDL","age_months","private_ins"
 )
 #BIC 7176
 #BIC 5542 wout
+# 1912279 
 
 covariates2 = c("hypertension","male","diabetes",
                 "age_months","race2",
                 "race3", "race4", "race5"
 )
+# 5296132
 
-covariates = c("hypertension","male","diabetes","age_months")
+covariates2 = c("hypertension","male","diabetes","age_months")
 #5699.97 w/out <18 !!!!!!!
+# 5296132 
+
+covariates2 = c("hypertension","male","diabetes","age.4059","age.60",
+                "Triglycerides","race2",
+                "race3", "race4", "race5", "smoking_former", "smoking_current")
+#1866857
 
 
+covariates2 = c("hypertension","male","diabetes","race2",
+                "race3", "race4", "race5")
+#13714240
+
+covariates2 = c("hypertension","male","diabetes","age.4059","age.60",
+                "race2",
+                "race3", "race4", "race5","LDL")
+#9071186
 fm = as.formula(paste("CKD_epi_eGFR~",paste(covariates2, collapse= "+")))
 
 fit1a = svyglm(fm, design = NHANES.MEC.design1, family="gaussian")
@@ -140,7 +178,7 @@ while(done==0){
       next # skip iteration and go to next iteration
       cat(n) }
     test.predictors = c(good.predictors,covariates[i])
-    fm = as.formula(paste("CKD~",paste(covariates[covariates %in% test.predictors], collapse= "+")))
+    fm = as.formula(paste("CKD_epi_eGFR~",paste(covariates[covariates %in% test.predictors], collapse= "+")))
     fit1a = svyglm(fm, design = NHANES.MEC.design1, family = "binomial")
     aic.new = fit1a$aic
     list.aic = c(list.aic,aic.new)
